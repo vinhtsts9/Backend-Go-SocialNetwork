@@ -1,0 +1,24 @@
+server:
+  port: 
+  mode: "dev"
+mysql: 
+  host: 127.0.0.1
+  port: 8811
+  username: root
+  password: 123456
+  dbname: test
+  maxIdleConns: 10
+  maxOpenConns: 100
+  connMaxLifetime: 3600
+log:
+  log_level: debug
+  file_log_name: "./storages/logs/dev.xxx.log"
+  max_size: 500
+  max_backups: 3
+  max_age: 28
+  compress: true
+redis:
+  host: 127.0.0.1
+  port: 6379
+  password:
+  database: 0

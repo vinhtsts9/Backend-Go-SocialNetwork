@@ -1,0 +1,102 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server celler server.",
+        "title": "API Documentation Ecommerce Backend Shopdevgo",
+        "termsOfService": "github.com/Vinhts/GO-MAIN",
+        "contact": {
+            "name": "Team go",
+            "url": "github.com/Vinhts/GO-MAIN",
+            "email": "vinhtiensinh17@gmail.com"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0.0"
+    },
+    "host": "localhost:1006",
+    "basePath": "/v1/2024",
+    "paths": {
+        "/user/register": {
+            "post": {
+                "description": "When user is registered send otp to email",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "accounts management"
+                ],
+                "summary": "User Registration",
+                "parameters": [
+                    {
+                        "description": "payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.RegisterInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResponseData"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseData"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "model.RegisterInput": {
+            "type": "object",
+            "properties": {
+                "verify_key": {
+                    "type": "string"
+                },
+                "verify_purpose": {
+                    "type": "string"
+                },
+                "verify_type": {
+                    "type": "integer"
+                }
+            }
+        },
+        "response.ErrorResponseData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "detail": {},
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ResponseData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {},
+                "message": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

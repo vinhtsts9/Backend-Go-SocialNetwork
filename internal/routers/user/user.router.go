@@ -1,0 +1,27 @@
+package user
+
+import (
+	"go-ecommerce-backend-api/m/v2/internal/controller/account"
+
+	"github.com/gin-gonic/gin"
+)
+
+type UserRouter struct{}
+
+func (pr *UserRouter) InitUserRouter(Router *gin.RouterGroup) {
+	// public router
+	// userController, _ := wire.InitUserRouterHandler()
+	userRouterPublic := Router.Group("/user")
+	{
+		userRouterPublic.POST("/register", account.Login.Register)
+		userRouterPublic.POST("/login", account.Login.Login)
+	}
+	// private router
+	userRouterPrivate := Router.Group("/user")
+	// userRouterPrivate.Use(limiter())
+	// userRouterPrivate.Use(Authen())
+	// userRouterPrivate.Use(Permission())
+	{
+		userRouterPrivate.GET("/get_info")
+	}
+}

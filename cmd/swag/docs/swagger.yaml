@@ -1,0 +1,68 @@
+basePath: /v1/2024
+definitions:
+  model.RegisterInput:
+    properties:
+      verify_key:
+        type: string
+      verify_purpose:
+        type: string
+      verify_type:
+        type: integer
+    type: object
+  response.ErrorResponseData:
+    properties:
+      code:
+        type: integer
+      detail: {}
+      error:
+        type: string
+    type: object
+  response.ResponseData:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+host: localhost:1006
+info:
+  contact:
+    email: vinhtiensinh17@gmail.com
+    name: Team go
+    url: github.com/Vinhts/GO-MAIN
+  description: This is a sample server celler server.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: github.com/Vinhts/GO-MAIN
+  title: API Documentation Ecommerce Backend Shopdevgo
+  version: 1.0.0
+paths:
+  /user/register:
+    post:
+      consumes:
+      - application/json
+      description: When user is registered send otp to email
+      parameters:
+      - description: payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/model.RegisterInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseData'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseData'
+      summary: User Registration
+      tags:
+      - accounts management
+swagger: "2.0"
