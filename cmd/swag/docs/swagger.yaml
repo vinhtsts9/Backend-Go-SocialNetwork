@@ -9,6 +9,20 @@ definitions:
       verify_type:
         type: integer
     type: object
+  model.UpdatePasswordRegisterInput:
+    properties:
+      user_password:
+        type: string
+      user_token:
+        type: string
+    type: object
+  model.VerifyInput:
+    properties:
+      verify_code:
+        type: string
+      verify_key:
+        type: string
+    type: object
   response.ErrorResponseData:
     properties:
       code:
@@ -63,6 +77,58 @@ paths:
           schema:
             $ref: '#/definitions/response.ErrorResponseData'
       summary: User Registration
+      tags:
+      - accounts management
+  /user/update_pass_register:
+    post:
+      consumes:
+      - application/json
+      description: UpdatePasswordRegister
+      parameters:
+      - description: payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdatePasswordRegisterInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseData'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseData'
+      summary: UpdatePasswordRegister
+      tags:
+      - accounts management
+  /user/verify_account:
+    post:
+      consumes:
+      - application/json
+      description: Verify OTP Login By User
+      parameters:
+      - description: payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/model.VerifyInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseData'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseData'
+      summary: Verify OTP Login By User
       tags:
       - accounts management
 swagger: "2.0"

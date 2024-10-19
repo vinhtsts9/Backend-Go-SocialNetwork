@@ -10,10 +10,10 @@ import (
 )
 
 const (
-	SMTPHost     = ""
-	SMTPPort     = ""
-	SMTPUsername = ""
-	SMTPPassword = ""
+	SMTPHost     = "sandbox.smtp.mailtrap.io"
+	SMTPPort     = "465"
+	SMTPUsername = "0f856f53638897"
+	SMTPPassword = "69b7a0dc9abfbe"
 )
 
 type EmailAddress struct {
@@ -50,7 +50,7 @@ func SendTextEmail(to []string, from string, otp string) error {
 
 	auth := smtp.PlainAuth("", SMTPUsername, SMTPPassword, SMTPHost)
 
-	err := smtp.SendMail(SMTPHost+":25", auth, from, to, []byte(messageEmail))
+	err := smtp.SendMail(SMTPHost+":465", auth, from, to, []byte(messageEmail))
 	if err != nil {
 		global.Logger.Error("Email send failed::", zap.Error(err))
 		return err

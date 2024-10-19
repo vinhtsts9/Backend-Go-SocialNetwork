@@ -19,6 +19,6 @@ func InitKafKa() {
 
 func CloseKafka() {
 	if err := global.KafkaProducer.Close(); err != nil {
-		log.Fatalf("Failed to close kafka producer %v", err)
+		log.Fatalf("Failed to close kafka producer: %v", err)
 	}
 }

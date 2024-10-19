@@ -57,6 +57,86 @@
                     }
                 }
             }
+        },
+        "/user/update_pass_register": {
+            "post": {
+                "description": "UpdatePasswordRegister",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "accounts management"
+                ],
+                "summary": "UpdatePasswordRegister",
+                "parameters": [
+                    {
+                        "description": "payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.UpdatePasswordRegisterInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResponseData"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseData"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/verify_account": {
+            "post": {
+                "description": "Verify OTP Login By User",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "accounts management"
+                ],
+                "summary": "Verify OTP Login By User",
+                "parameters": [
+                    {
+                        "description": "payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.VerifyInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResponseData"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseData"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -71,6 +151,28 @@
                 },
                 "verify_type": {
                     "type": "integer"
+                }
+            }
+        },
+        "model.UpdatePasswordRegisterInput": {
+            "type": "object",
+            "properties": {
+                "user_password": {
+                    "type": "string"
+                },
+                "user_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.VerifyInput": {
+            "type": "object",
+            "properties": {
+                "verify_code": {
+                    "type": "string"
+                },
+                "verify_key": {
+                    "type": "string"
                 }
             }
         },

@@ -6,6 +6,7 @@ import (
 	"go-ecommerce-backend-api/m/v2/global"
 	"time"
 
+	_ "github.com/go-sql-driver/mysql"
 	"go.uber.org/zap"
 )
 
@@ -32,10 +33,7 @@ func InitMysqlC() {
 
 func SetPoolC() {
 	m := global.Config.Mysql
-	sqlDb, err := global.Mdb.DB()
-	if err != nil {
-		fmt.Printf("mysql error: %s::", err)
-	}
+	sqlDb := global.Mdbc
 	sqlDb.SetConnMaxIdleTime(time.Duration(m.MaxIdleConnes))
 	sqlDb.SetConnMaxLifetime(time.Duration(m.ConnMaxLifetime))
 	sqlDb.SetMaxIdleConns(m.MaxOpenConnes)
