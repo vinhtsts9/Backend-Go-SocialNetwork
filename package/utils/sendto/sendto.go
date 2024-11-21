@@ -56,5 +56,5 @@ func SendTextEmail(to []string, from string, otp string) error {
 		return err
 	}
 
-	return nil
+	return err
 }

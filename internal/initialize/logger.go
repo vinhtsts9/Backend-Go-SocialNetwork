@@ -6,5 +6,6 @@ import (
 )
 
 func InitLogger() {
-	global.Logger = logger.NewLogger(global.Config.Logger)
+	lz := logger.NewLogger(global.Config.Logger)
+	global.Logger = lz.GetZapLogger()
 }

@@ -2,9 +2,10 @@ package setting
 
 type Config struct {
 	Mysql  MySQLSetting  `mapstructure:"mysql"`
-	Logger LogSetting    `mapstructure:"logger"`
+	Logger LogSetting    `mapstructure:"log"`
 	Server ServerSetting `mapstructure:"server"`
 	Redis  RedisSetting  `mapstructure:"redis"`
+	JWT    JWTSetting    `mapstructure:"jwt"`
 }
 type ServerSetting struct {
 	Port int    `mapstructure:"port"`
@@ -28,9 +29,14 @@ type MySQLSetting struct {
 }
 type LogSetting struct {
 	LogLevel   string `mapstructure:"log_level"`
-	FileName   string `mapstruture:"file_name"`
+	FileName   string `mapstructure:"file_log_name"`
 	MaxSize    int    `mapstructure:"max_size"`
 	MaxBackups int    `mapstructure:"max_backups"`
 	MaxAge     int    `mapstructure:"max_age"`
 	Compress   bool   `mapstructure:"compress"`
+}
+type JWTSetting struct {
+	TOKEN_HOUR_LIFESPAN uint   `mapstructure:"TOKEN_HOUR_LIFESPAN"`
+	API_SECRET_KEY      string `mapstructure:"API_SECRET_KEY"`
+	JWT_EXPIRATION      string `mapstructure:"JWT_EXPIRATION"`
 }

@@ -10,7 +10,11 @@ import (
 )
 
 type LoggerZap struct {
-	*zap.Logger
+	zapLogger *zap.Logger
+}
+
+func (l LoggerZap) GetZapLogger() *zap.Logger {
+	return l.zapLogger
 }
 
 func NewLogger(config setting.LogSetting) *LoggerZap {
@@ -41,18 +45,19 @@ func NewLogger(config setting.LogSetting) *LoggerZap {
 		zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(&hook)),
 		level,
 	)
+
 	return &LoggerZap{zap.New(core, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel))}
 }
 
 func getEncoderLog() zapcore.Encoder {
 	encodeConfig := zap.NewProductionEncoderConfig()
-	// 124356.564352 -> 2024-05-26T16:16:07
+	// 123534.634634 -> 2024-05-26:T16:16:07
 	encodeConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	// ts -> time
 	encodeConfig.TimeKey = "time"
-	// info-> INFO
+	// info -> INFO
 	encodeConfig.EncodeLevel = zapcore.CapitalLevelEncoder
-	//"caller":"cli/main.log.go:24"
+	// "caller":"cli/main.log.go:24"
 	encodeConfig.EncodeCaller = zapcore.ShortCallerEncoder
 	return zapcore.NewJSONEncoder(encodeConfig)
 }

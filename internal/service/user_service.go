@@ -8,10 +8,16 @@ import (
 type (
 	// ..interface
 	IUserLogin interface {
-		Login(ctx context.Context) error
+		Login(ctx context.Context, in *model.LoginInput) (codeResult int, out model.LoginOutPut, err error)
 		Register(ctx context.Context, in *model.RegisterInput) (codeResult int, err error)
 		VerifyOTP(ctx context.Context, in *model.VerifyInput) (out model.VerifyOTPOutput, err error)
 		UpdatePasswordRegister(ctx context.Context, token string, password string) (userId int, err error)
+
+		// two factor authentication
+		IsTwoFactorEnabled(ctx context.Context, userId int) (codeResult int, rs bool, err error)
+		SetupTwoFactorAuth(ctx context.Context, in *model.SetupTwoFactorAuthInput) (codeResult int, err error)
+
+		VerifyTwoFactorAuth(ctx context.Context, in *model.TwoFactorVerificationInput) (codeResult int, err error)
 	}
 
 	IUserInfor interface {

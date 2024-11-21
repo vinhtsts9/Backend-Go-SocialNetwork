@@ -6,7 +6,52 @@ package database
 
 import (
 	"database/sql"
+	"database/sql/driver"
+	"fmt"
 )
+
+type PreGoAccUserTwoFactor9999TwoFactorAuthType string
+
+const (
+	PreGoAccUserTwoFactor9999TwoFactorAuthTypeSMS   PreGoAccUserTwoFactor9999TwoFactorAuthType = "SMS"
+	PreGoAccUserTwoFactor9999TwoFactorAuthTypeEMAIL PreGoAccUserTwoFactor9999TwoFactorAuthType = "EMAIL"
+	PreGoAccUserTwoFactor9999TwoFactorAuthTypeAPP   PreGoAccUserTwoFactor9999TwoFactorAuthType = "APP"
+)
+
+func (e *PreGoAccUserTwoFactor9999TwoFactorAuthType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = PreGoAccUserTwoFactor9999TwoFactorAuthType(s)
+	case string:
+		*e = PreGoAccUserTwoFactor9999TwoFactorAuthType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for PreGoAccUserTwoFactor9999TwoFactorAuthType: %T", src)
+	}
+	return nil
+}
+
+type NullPreGoAccUserTwoFactor9999TwoFactorAuthType struct {
+	PreGoAccUserTwoFactor9999TwoFactorAuthType PreGoAccUserTwoFactor9999TwoFactorAuthType
+	Valid                                      bool // Valid is true if PreGoAccUserTwoFactor9999TwoFactorAuthType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullPreGoAccUserTwoFactor9999TwoFactorAuthType) Scan(value interface{}) error {
+	if value == nil {
+		ns.PreGoAccUserTwoFactor9999TwoFactorAuthType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.PreGoAccUserTwoFactor9999TwoFactorAuthType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullPreGoAccUserTwoFactor9999TwoFactorAuthType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.PreGoAccUserTwoFactor9999TwoFactorAuthType), nil
+}
 
 // pre_go_acc_user_base_9999
 type PreGoAccUserBase9999 struct {
@@ -19,6 +64,8 @@ type PreGoAccUserBase9999 struct {
 	UserLoginIp    sql.NullString
 	UserCreatedAt  sql.NullTime
 	UserUpdatedAt  sql.NullTime
+	// authentication is enable for the userbase
+	IsTwoFactorEnabled sql.NullInt32
 }
 
 // pre_go_acc_user_9999
@@ -39,6 +86,19 @@ type PreGoAccUserInfo9999 struct {
 	CreatedAt sql.NullTime
 	// record update time
 	UpdatedAt sql.NullTime
+}
+
+// pre_go_acc_user_two_factor_9999
+type PreGoAccUserTwoFactor9999 struct {
+	TwoFactorID         uint32
+	UserID              uint32
+	TwoFactorAuthType   PreGoAccUserTwoFactor9999TwoFactorAuthType
+	TwoFactorAuthSecret string
+	TwoFactorPhone      sql.NullString
+	TwoFactorEmail      sql.NullString
+	TwoFactorIsActive   bool
+	TwoFactorCreatedAt  sql.NullTime
+	TwoFactorUpdatedAt  sql.NullTime
 }
 
 // account_user_verify

@@ -23,15 +23,18 @@ func SendEmailToJavaByApi(otp string, email string, purpose string) error {
 		Subject:     "Verify OTP" + purpose,
 		Attachment:  "path/to/email",
 	}
+
 	requestBody, err := json.Marshal(mailRequest)
 	if err != nil {
 		return err
 	}
+
 	req, err := http.NewRequest("POST", postURL, bytes.NewBuffer(requestBody))
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Content-Type", "application/json")
+
+	req.Header.Set("Content_Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

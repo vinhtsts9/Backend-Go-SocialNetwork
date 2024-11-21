@@ -5,8 +5,6 @@ services:
     container_name: demo_zookeeper
     ports:
      - 2181:2181
-     - 2888:2888
-     - 3888:3888
     networks:
       - my_master_slave_sql
 
@@ -18,7 +16,12 @@ services:
     links:
      - zookeeper
     environment:
-     - ZOOKEEPER_CONNECT=zookeeper:2181
+      KAFKA_BROKER_ID: 1
+      ZOOKEEPER_CONNECT: demo_zookeeper:2181
+      KAFKA_LISTENERS: INTERNAL://:29092,EXTERNAL://:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
     networks:
       - my_master_slave_sql
 
@@ -27,7 +30,7 @@ services:
     container_name: demo_kafka-ui
     environment:
       KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: demo_kafka:9092
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: demo_kafka:29092
     ports:
       - "9089:8080"
     links:
@@ -43,19 +46,19 @@ services:
     links:
      - kafka
     environment:
-     - BOOTSTRAP_SERVERS=kafka:9092
+     - BOOTSTRAP_SERVERS=demo_kafka:29092
      - GROUP_ID=1
      - CONFIG_STORAGE_TOPIC=my_connect_configs
      - OFFSET_STORAGE_TOPIC=my_connect_offsets
      - STATUS_STORAGE_TOPIC=my_connect_statuses
-     - DATABASE_HOSTNAME=mysql8-master  # Kết nối đến container MySQL hiện có
-     - DATABASE_PORT=3306                 # Cổng MySQL
-     - DATABASE_USER=root                 # Tài khoản MySQL
-     - DATABASE_PASSWORD=123456           # Mật khẩu MySQL
-     - DATABASE_NAME=test                  # Tên database
+     - DATABASE_HOSTNAME=mysql8-master  # Kết nối tới MySQL đã cài
+     - DATABASE_PORT=3306
+     - DATABASE_USER=root
+     - DATABASE_PASSWORD=123456
+     - DATABASE_NAME=test
     networks:
       - my_master_slave_sql
 
 networks:
   my_master_slave_sql:
-    external: true  # Chỉ định rằng mạng này đã tồn tại bên ngoài
+    external: true

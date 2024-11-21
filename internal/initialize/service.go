@@ -9,5 +9,5 @@ import (
 
 func InitServiceInterface() {
 	queries := database.New(global.Mdbc)
-	service.InitUserLogin(impl.NewUserLoginImpl(queries))
+	service.InitUserLogin(impl.NemUserLoginImpl(queries))
 }
