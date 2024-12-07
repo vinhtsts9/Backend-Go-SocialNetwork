@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"go-ecommerce-backend-api/m/v2/package/setting"
 
+	"github.com/casbin/casbin/v2"
 	"github.com/redis/go-redis/v9"
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
@@ -17,4 +18,6 @@ var (
 	Rdb           *redis.Client
 	Mdbc          *sql.DB
 	KafkaProducer *kafka.Writer
+	KafkaConsumer *kafka.Reader
+	Casbin        *casbin.Enforcer
 )

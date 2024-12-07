@@ -7,54 +7,342 @@ package database
 import (
 	"database/sql"
 	"database/sql/driver"
+	"encoding/json"
 	"fmt"
+	"time"
 )
 
-type PreGoAccUserTwoFactor9999TwoFactorAuthType string
+type ChatLogsEventType string
 
 const (
-	PreGoAccUserTwoFactor9999TwoFactorAuthTypeSMS   PreGoAccUserTwoFactor9999TwoFactorAuthType = "SMS"
-	PreGoAccUserTwoFactor9999TwoFactorAuthTypeEMAIL PreGoAccUserTwoFactor9999TwoFactorAuthType = "EMAIL"
-	PreGoAccUserTwoFactor9999TwoFactorAuthTypeAPP   PreGoAccUserTwoFactor9999TwoFactorAuthType = "APP"
+	ChatLogsEventTypeJoined        ChatLogsEventType = "joined"
+	ChatLogsEventTypeLeft          ChatLogsEventType = "left"
+	ChatLogsEventTypeRoleChanged   ChatLogsEventType = "role_changed"
+	ChatLogsEventTypeNameChanged   ChatLogsEventType = "name_changed"
+	ChatLogsEventTypeAvatarChanged ChatLogsEventType = "avatar_changed"
 )
 
-func (e *PreGoAccUserTwoFactor9999TwoFactorAuthType) Scan(src interface{}) error {
+func (e *ChatLogsEventType) Scan(src interface{}) error {
 	switch s := src.(type) {
 	case []byte:
-		*e = PreGoAccUserTwoFactor9999TwoFactorAuthType(s)
+		*e = ChatLogsEventType(s)
 	case string:
-		*e = PreGoAccUserTwoFactor9999TwoFactorAuthType(s)
+		*e = ChatLogsEventType(s)
 	default:
-		return fmt.Errorf("unsupported scan type for PreGoAccUserTwoFactor9999TwoFactorAuthType: %T", src)
+		return fmt.Errorf("unsupported scan type for ChatLogsEventType: %T", src)
 	}
 	return nil
 }
 
-type NullPreGoAccUserTwoFactor9999TwoFactorAuthType struct {
-	PreGoAccUserTwoFactor9999TwoFactorAuthType PreGoAccUserTwoFactor9999TwoFactorAuthType
-	Valid                                      bool // Valid is true if PreGoAccUserTwoFactor9999TwoFactorAuthType is not NULL
+type NullChatLogsEventType struct {
+	ChatLogsEventType ChatLogsEventType
+	Valid             bool // Valid is true if ChatLogsEventType is not NULL
 }
 
 // Scan implements the Scanner interface.
-func (ns *NullPreGoAccUserTwoFactor9999TwoFactorAuthType) Scan(value interface{}) error {
+func (ns *NullChatLogsEventType) Scan(value interface{}) error {
 	if value == nil {
-		ns.PreGoAccUserTwoFactor9999TwoFactorAuthType, ns.Valid = "", false
+		ns.ChatLogsEventType, ns.Valid = "", false
 		return nil
 	}
 	ns.Valid = true
-	return ns.PreGoAccUserTwoFactor9999TwoFactorAuthType.Scan(value)
+	return ns.ChatLogsEventType.Scan(value)
 }
 
 // Value implements the driver Valuer interface.
-func (ns NullPreGoAccUserTwoFactor9999TwoFactorAuthType) Value() (driver.Value, error) {
+func (ns NullChatLogsEventType) Value() (driver.Value, error) {
 	if !ns.Valid {
 		return nil, nil
 	}
-	return string(ns.PreGoAccUserTwoFactor9999TwoFactorAuthType), nil
+	return string(ns.ChatLogsEventType), nil
+}
+
+type MessagesMessageType string
+
+const (
+	MessagesMessageTypeText  MessagesMessageType = "text"
+	MessagesMessageTypeImage MessagesMessageType = "image"
+	MessagesMessageTypeVideo MessagesMessageType = "video"
+	MessagesMessageTypeFile  MessagesMessageType = "file"
+)
+
+func (e *MessagesMessageType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = MessagesMessageType(s)
+	case string:
+		*e = MessagesMessageType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for MessagesMessageType: %T", src)
+	}
+	return nil
+}
+
+type NullMessagesMessageType struct {
+	MessagesMessageType MessagesMessageType
+	Valid               bool // Valid is true if MessagesMessageType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullMessagesMessageType) Scan(value interface{}) error {
+	if value == nil {
+		ns.MessagesMessageType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.MessagesMessageType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullMessagesMessageType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.MessagesMessageType), nil
+}
+
+type MessagesStatusStatus string
+
+const (
+	MessagesStatusStatusSent     MessagesStatusStatus = "sent"
+	MessagesStatusStatusReceived MessagesStatusStatus = "received"
+	MessagesStatusStatusRead     MessagesStatusStatus = "read"
+	MessagesStatusStatusSending  MessagesStatusStatus = "sending"
+	MessagesStatusStatusDeleted  MessagesStatusStatus = "deleted"
+	MessagesStatusStatusEdited   MessagesStatusStatus = "edited"
+)
+
+func (e *MessagesStatusStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = MessagesStatusStatus(s)
+	case string:
+		*e = MessagesStatusStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for MessagesStatusStatus: %T", src)
+	}
+	return nil
+}
+
+type NullMessagesStatusStatus struct {
+	MessagesStatusStatus MessagesStatusStatus
+	Valid                bool // Valid is true if MessagesStatusStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullMessagesStatusStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.MessagesStatusStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.MessagesStatusStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullMessagesStatusStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.MessagesStatusStatus), nil
+}
+
+type ReactionsReactionType string
+
+const (
+	ReactionsReactionTypeLike  ReactionsReactionType = "like"
+	ReactionsReactionTypeLove  ReactionsReactionType = "love"
+	ReactionsReactionTypeLaugh ReactionsReactionType = "laugh"
+	ReactionsReactionTypeAngry ReactionsReactionType = "angry"
+	ReactionsReactionTypeSad   ReactionsReactionType = "sad"
+)
+
+func (e *ReactionsReactionType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ReactionsReactionType(s)
+	case string:
+		*e = ReactionsReactionType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ReactionsReactionType: %T", src)
+	}
+	return nil
+}
+
+type NullReactionsReactionType struct {
+	ReactionsReactionType ReactionsReactionType
+	Valid                 bool // Valid is true if ReactionsReactionType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullReactionsReactionType) Scan(value interface{}) error {
+	if value == nil {
+		ns.ReactionsReactionType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ReactionsReactionType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullReactionsReactionType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ReactionsReactionType), nil
+}
+
+type UserTwoFactorTwoFactorAuthType string
+
+const (
+	UserTwoFactorTwoFactorAuthTypeSMS   UserTwoFactorTwoFactorAuthType = "SMS"
+	UserTwoFactorTwoFactorAuthTypeEMAIL UserTwoFactorTwoFactorAuthType = "EMAIL"
+	UserTwoFactorTwoFactorAuthTypeAPP   UserTwoFactorTwoFactorAuthType = "APP"
+)
+
+func (e *UserTwoFactorTwoFactorAuthType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = UserTwoFactorTwoFactorAuthType(s)
+	case string:
+		*e = UserTwoFactorTwoFactorAuthType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for UserTwoFactorTwoFactorAuthType: %T", src)
+	}
+	return nil
+}
+
+type NullUserTwoFactorTwoFactorAuthType struct {
+	UserTwoFactorTwoFactorAuthType UserTwoFactorTwoFactorAuthType
+	Valid                          bool // Valid is true if UserTwoFactorTwoFactorAuthType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullUserTwoFactorTwoFactorAuthType) Scan(value interface{}) error {
+	if value == nil {
+		ns.UserTwoFactorTwoFactorAuthType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.UserTwoFactorTwoFactorAuthType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullUserTwoFactorTwoFactorAuthType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.UserTwoFactorTwoFactorAuthType), nil
+}
+
+type CasbinRule struct {
+	Ptype sql.NullString
+	V0    sql.NullString
+	V1    sql.NullString
+	V2    sql.NullString
+	V3    sql.NullString
+	V4    sql.NullString
+	V5    sql.NullString
+}
+
+type ChatLog struct {
+	ID           int32
+	RoomID       sql.NullInt32
+	UserID       sql.NullInt64
+	EventType    ChatLogsEventType
+	EventDetails sql.NullString
+	CreatedAt    sql.NullTime
+}
+
+type Comment struct {
+	ID             int32
+	PostID         uint64
+	UserID         uint64
+	CommentContent sql.NullString
+	CommentLeft    sql.NullInt32
+	CommentRight   sql.NullInt32
+	CommentParent  sql.NullInt32
+	Isdeleted      sql.NullBool
+	CreatedAt      sql.NullTime
+	UpdatedAt      sql.NullTime
+}
+
+type Message struct {
+	ID             int32
+	RoomID         sql.NullInt32
+	SenderID       sql.NullInt64
+	MessageContext sql.NullString
+	MessageType    NullMessagesMessageType
+	IsPinned       sql.NullBool
+	IsAnnouncement sql.NullBool
+	CreatedAt      sql.NullTime
+}
+
+type MessagesStatus struct {
+	ID        int32
+	MessageID sql.NullInt32
+	UserID    sql.NullInt64
+	Status    MessagesStatusStatus
+	UpdatedAt sql.NullTime
+}
+
+type Permission struct {
+	ID             int32
+	PermissionName string
+	Description    sql.NullString
+	Resource       string
+	Action         string
+}
+
+type Post struct {
+	ID          uint64
+	UserID      uint64
+	Title       string
+	Content     json.RawMessage
+	CreatedAt   sql.NullTime
+	UpdatedAt   sql.NullTime
+	IsPublished sql.NullBool
+	Metadata    json.RawMessage
+}
+
+type Reaction struct {
+	ID           int32
+	UserID       sql.NullInt64
+	MessageID    sql.NullInt32
+	ReactionType ReactionsReactionType
+	CreatedAt    sql.NullTime
+}
+
+type Role struct {
+	ID          int32
+	RoleName    string
+	Description sql.NullString
+}
+
+type RolePermission struct {
+	ID           int32
+	RoleID       sql.NullInt32
+	PermissionID sql.NullInt32
+}
+
+type RoomChat struct {
+	ID        int64
+	Name      string
+	IsGroup   bool
+	AdminID   uint64
+	AvatarUrl string
+	CreatedAt time.Time
+}
+
+type RoomMember struct {
+	ID       int32
+	RoomID   int64
+	UserID   uint64
+	JoinedAt sql.NullTime
 }
 
 // pre_go_acc_user_base_9999
-type PreGoAccUserBase9999 struct {
+type UserBase struct {
 	UserID         int32
 	UserAccount    string
 	UserPassword   string
@@ -69,7 +357,7 @@ type PreGoAccUserBase9999 struct {
 }
 
 // pre_go_acc_user_9999
-type PreGoAccUserInfo9999 struct {
+type UserInfo struct {
 	// User ID
 	UserID       uint64
 	UserAccount  string
@@ -88,11 +376,19 @@ type PreGoAccUserInfo9999 struct {
 	UpdatedAt sql.NullTime
 }
 
+type UserRole struct {
+	ID         int32
+	UserID     sql.NullInt64
+	RoleID     sql.NullInt32
+	RoomID     sql.NullInt32
+	AssignedAt sql.NullTime
+}
+
 // pre_go_acc_user_two_factor_9999
-type PreGoAccUserTwoFactor9999 struct {
+type UserTwoFactor struct {
 	TwoFactorID         uint32
 	UserID              uint32
-	TwoFactorAuthType   PreGoAccUserTwoFactor9999TwoFactorAuthType
+	TwoFactorAuthType   UserTwoFactorTwoFactorAuthType
 	TwoFactorAuthSecret string
 	TwoFactorPhone      sql.NullString
 	TwoFactorEmail      sql.NullString
@@ -102,7 +398,7 @@ type PreGoAccUserTwoFactor9999 struct {
 }
 
 // account_user_verify
-type PreGoAccUserVerify9999 struct {
+type UserVerify struct {
 	VerifyID        int32
 	VerifyOtp       string
 	VerifyKey       string

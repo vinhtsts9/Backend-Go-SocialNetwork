@@ -12,7 +12,7 @@ import (
 
 const addUserAutoUserId = `-- name: AddUserAutoUserId :execresult
 
-INSERT INTO ` + "`" + `pre_go_acc_user_info_9999` + "`" + ` (
+INSERT INTO ` + "`" + `user_info` + "`" + ` (
     user_account,
     user_nickname,
     user_avatar,
@@ -39,7 +39,7 @@ type AddUserAutoUserIdParams struct {
 }
 
 // -- name: UpdatePassword :exec
-// UPDATE `pre_go_acc_user_info_9999` SET user_password = ? WHERE user_id = ?;
+// UPDATE `user_info` SET user_password = ? WHERE user_id = ?;
 func (q *Queries) AddUserAutoUserId(ctx context.Context, arg AddUserAutoUserIdParams) (sql.Result, error) {
 	return q.db.ExecContext(ctx, addUserAutoUserId,
 		arg.UserAccount,
@@ -55,7 +55,7 @@ func (q *Queries) AddUserAutoUserId(ctx context.Context, arg AddUserAutoUserIdPa
 }
 
 const addUserHaveUserId = `-- name: AddUserHaveUserId :execresult
-INSERT INTO ` + "`" + `pre_go_acc_user_info_9999` + "`" + ` (
+INSERT INTO ` + "`" + `user_info` + "`" + ` (
     user_id,
     user_account,
     user_nickname,
@@ -99,7 +99,7 @@ func (q *Queries) AddUserHaveUserId(ctx context.Context, arg AddUserHaveUserIdPa
 }
 
 const editUserByUserId = `-- name: EditUserByUserId :execresult
-UPDATE ` + "`" + `pre_go_acc_user_info_9999` + "`" + `
+UPDATE ` + "`" + `user_info` + "`" + `
 SET user_nickname = ?, user_avatar = ?, user_mobile = ?,
 user_gender = ?, user_birthday = ?, user_email = ?, updated_at = NOW()
 WHERE user_id = ? AND user_is_authencation = 1
@@ -128,7 +128,7 @@ func (q *Queries) EditUserByUserId(ctx context.Context, arg EditUserByUserIdPara
 }
 
 const findUsers = `-- name: FindUsers :many
-SELECT user_id, user_account, user_nickname, user_avatar, user_state, user_mobile, user_gender, user_birthday, user_email, user_is_authencation, created_at, updated_at FROM pre_go_acc_user_info_9999 WHERE user_account LIKE ? OR user_nickname LIKE ?
+SELECT user_id, user_account, user_nickname, user_avatar, user_state, user_mobile, user_gender, user_birthday, user_email, user_is_authencation, created_at, updated_at FROM user_info WHERE user_account LIKE ? OR user_nickname LIKE ?
 `
 
 type FindUsersParams struct {
@@ -136,15 +136,15 @@ type FindUsersParams struct {
 	UserNickname sql.NullString
 }
 
-func (q *Queries) FindUsers(ctx context.Context, arg FindUsersParams) ([]PreGoAccUserInfo9999, error) {
+func (q *Queries) FindUsers(ctx context.Context, arg FindUsersParams) ([]UserInfo, error) {
 	rows, err := q.db.QueryContext(ctx, findUsers, arg.UserAccount, arg.UserNickname)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []PreGoAccUserInfo9999
+	var items []UserInfo
 	for rows.Next() {
-		var i PreGoAccUserInfo9999
+		var i UserInfo
 		if err := rows.Scan(
 			&i.UserID,
 			&i.UserAccount,
@@ -186,13 +186,13 @@ SELECT
     user_is_authencation,
     created_at,
     updated_at
-FROM ` + "`" + `pre_go_acc_user_info_9999` + "`" + `
+FROM ` + "`" + `user_info` + "`" + `
 WHERE user_id = ? LIMIT 1
 `
 
-func (q *Queries) GetUser(ctx context.Context, userID uint64) (PreGoAccUserInfo9999, error) {
+func (q *Queries) GetUser(ctx context.Context, userID uint64) (UserInfo, error) {
 	row := q.db.QueryRowContext(ctx, getUser, userID)
-	var i PreGoAccUserInfo9999
+	var i UserInfo
 	err := row.Scan(
 		&i.UserID,
 		&i.UserAccount,
@@ -224,19 +224,19 @@ SELECT
     user_is_authencation,
     created_at,
     updated_at
-FROM ` + "`" + `pre_go_acc_user_info_9999` + "`" + `
+FROM ` + "`" + `user_info` + "`" + `
 WHERE user_id IN (?)
 `
 
-func (q *Queries) GetUsers(ctx context.Context, userID uint64) ([]PreGoAccUserInfo9999, error) {
+func (q *Queries) GetUsers(ctx context.Context, userID uint64) ([]UserInfo, error) {
 	rows, err := q.db.QueryContext(ctx, getUsers, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []PreGoAccUserInfo9999
+	var items []UserInfo
 	for rows.Next() {
-		var i PreGoAccUserInfo9999
+		var i UserInfo
 		if err := rows.Scan(
 			&i.UserID,
 			&i.UserAccount,
@@ -265,7 +265,7 @@ func (q *Queries) GetUsers(ctx context.Context, userID uint64) ([]PreGoAccUserIn
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT user_id, user_account, user_nickname, user_avatar, user_state, user_mobile, user_gender, user_birthday, user_email, user_is_authencation, created_at, updated_at FROM pre_go_acc_user_info_9999 LIMIT ? OFFSET ?
+SELECT user_id, user_account, user_nickname, user_avatar, user_state, user_mobile, user_gender, user_birthday, user_email, user_is_authencation, created_at, updated_at FROM user_info LIMIT ? OFFSET ?
 `
 
 type ListUsersParams struct {
@@ -273,15 +273,15 @@ type ListUsersParams struct {
 	Offset int32
 }
 
-func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]PreGoAccUserInfo9999, error) {
+func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]UserInfo, error) {
 	rows, err := q.db.QueryContext(ctx, listUsers, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []PreGoAccUserInfo9999
+	var items []UserInfo
 	for rows.Next() {
-		var i PreGoAccUserInfo9999
+		var i UserInfo
 		if err := rows.Scan(
 			&i.UserID,
 			&i.UserAccount,
@@ -310,7 +310,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]PreGoAc
 }
 
 const removeUser = `-- name: RemoveUser :exec
-DELETE FROM pre_go_acc_user_info_9999 WHERE user_id = ?
+DELETE FROM user_info WHERE user_id = ?
 `
 
 func (q *Queries) RemoveUser(ctx context.Context, userID uint64) error {

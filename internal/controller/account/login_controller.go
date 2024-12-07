@@ -70,7 +70,7 @@ func (c *cUserLogin) VerifyOTP(ctx *gin.Context) {
 // @Tags         accounts management
 // @Accept       json
 // @Produce      json
-// @Param        payload body model.VerifyInput true "payload"
+// @Param        payload body model.LoginInput true "payload"
 // @Success      200  {object}  response.ResponseData
 // @Failure      500  {object}  response.ErrorResponseData
 // @Router       /user/login [post]
@@ -82,7 +82,7 @@ func (c *cUserLogin) Login(ctx *gin.Context) {
 	}
 	codeRs, dataRs, err := service.UserLogin().Login(ctx, &params)
 	if err != nil {
-		response.ErrorResponse(ctx, response.ErrCodeParamInvalid, err.Error())
+		response.ErrorResponse(ctx, codeRs, err.Error())
 		return
 	}
 	response.SuccessResponse(ctx, codeRs, dataRs)

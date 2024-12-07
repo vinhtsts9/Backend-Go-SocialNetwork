@@ -12,13 +12,13 @@ import (
 
 const getInfoOTP = `-- name: GetInfoOTP :one
 SELECT verify_id, verify_otp, verify_key, verify_key_hash, verify_type, is_verified, is_deleted, verify_created_at, verify_updated_at
-FROM ` + "`" + `pre_go_acc_user_verify_9999` + "`" + `
+FROM ` + "`" + `user_verify` + "`" + `
 WHERE verify_key_hash =?
 `
 
-func (q *Queries) GetInfoOTP(ctx context.Context, verifyKeyHash string) (PreGoAccUserVerify9999, error) {
+func (q *Queries) GetInfoOTP(ctx context.Context, verifyKeyHash string) (UserVerify, error) {
 	row := q.db.QueryRowContext(ctx, getInfoOTP, verifyKeyHash)
-	var i PreGoAccUserVerify9999
+	var i UserVerify
 	err := row.Scan(
 		&i.VerifyID,
 		&i.VerifyOtp,
@@ -35,7 +35,7 @@ func (q *Queries) GetInfoOTP(ctx context.Context, verifyKeyHash string) (PreGoAc
 
 const getValidOTP = `-- name: GetValidOTP :one
 SELECT verify_otp, verify_key_hash, verify_key, verify_id
-FROM ` + "`" + `pre_go_acc_user_verify_9999` + "`" + `
+FROM ` + "`" + `user_verify` + "`" + `
 WHERE verify_key_hash = ? AND is_verified = 0
 `
 
@@ -59,7 +59,7 @@ func (q *Queries) GetValidOTP(ctx context.Context, verifyKeyHash string) (GetVal
 }
 
 const insertOTPVerify = `-- name: InsertOTPVerify :execresult
-INSERT INTO ` + "`" + `pre_go_acc_user_verify_9999` + "`" + ` (
+INSERT INTO ` + "`" + `user_verify` + "`" + ` (
     verify_otp,
     verify_key,
     verify_key_hash,
@@ -88,7 +88,7 @@ func (q *Queries) InsertOTPVerify(ctx context.Context, arg InsertOTPVerifyParams
 }
 
 const updateUserVerificationStatus = `-- name: UpdateUserVerificationStatus :exec
-UPDATE ` + "`" + `pre_go_acc_user_verify_9999` + "`" + `
+UPDATE ` + "`" + `user_verify` + "`" + `
 SET is_verified = 1,
     verify_updated_at = now()
 WHERE verify_key_hash = ?

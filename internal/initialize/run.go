@@ -12,6 +12,7 @@ func Run() *gin.Engine {
 	InitLogger()
 	global.Logger.Info("Config ok", zap.String("ok", "success"))
 	InitMysqlC()
+	InitCasbin()
 	InitServiceInterface()
 	InitRedis()
 	InitKafKa()

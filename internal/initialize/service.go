@@ -10,4 +10,8 @@ import (
 func InitServiceInterface() {
 	queries := database.New(global.Mdbc)
 	service.InitUserLogin(impl.NemUserLoginImpl(queries))
+	service.InitPost(impl.NewPostImpl(queries))
+	service.InitRBACService(impl.NewRbacImpl(queries))
+	service.InitPostProcessor(impl.NewPostProcessorImpl(queries))
+	service.InitIChat(impl.NewsChat(queries))
 }

@@ -11,7 +11,7 @@ import (
 )
 
 const addOrUpdateEmail = `-- name: AddOrUpdateEmail :exec
-INSERT INTO pre_go_acc_user_two_factor_9999 (user_id, two_factor_email, two_factor_is_active)
+INSERT INTO user_two_factor (user_id, two_factor_email, two_factor_is_active)
 VALUES (?, ?, TRUE)
 ON DUPLICATE KEY UPDATE 
     two_factor_email = ?, 
@@ -31,7 +31,7 @@ func (q *Queries) AddOrUpdateEmail(ctx context.Context, arg AddOrUpdateEmailPara
 }
 
 const addOrUpdatePhoneNumber = `-- name: AddOrUpdatePhoneNumber :exec
-INSERT INTO pre_go_acc_user_two_factor_9999 (user_id, two_factor_phone, two_factor_is_active)
+INSERT INTO user_two_factor (user_id, two_factor_phone, two_factor_is_active)
 VALUES (?, ?, TRUE)
 ON DUPLICATE KEY UPDATE 
     two_factor_phone = ?, 
@@ -52,7 +52,7 @@ func (q *Queries) AddOrUpdatePhoneNumber(ctx context.Context, arg AddOrUpdatePho
 
 const countActiveTwoFactorMethods = `-- name: CountActiveTwoFactorMethods :one
 SELECT COUNT(*)
-FROM pre_go_acc_user_two_factor_9999
+FROM user_two_factor
 WHERE user_id = ? AND two_factor_is_active = TRUE
 `
 
@@ -65,7 +65,7 @@ func (q *Queries) CountActiveTwoFactorMethods(ctx context.Context, userID uint32
 }
 
 const disableTwoFactor = `-- name: DisableTwoFactor :exec
-UPDATE pre_go_acc_user_two_factor_9999
+UPDATE user_two_factor
 SET two_factor_is_active = FALSE, 
     two_factor_updated_at = NOW()
 WHERE user_id = ? AND two_factor_auth_type = ?
@@ -73,7 +73,7 @@ WHERE user_id = ? AND two_factor_auth_type = ?
 
 type DisableTwoFactorParams struct {
 	UserID            uint32
-	TwoFactorAuthType PreGoAccUserTwoFactor9999TwoFactorAuthType
+	TwoFactorAuthType UserTwoFactorTwoFactorAuthType
 }
 
 // DisableTwoFactor
@@ -84,17 +84,17 @@ func (q *Queries) DisableTwoFactor(ctx context.Context, arg DisableTwoFactorPara
 
 const enableTwoFactorTypeEmail = `-- name: EnableTwoFactorTypeEmail :exec
 
-INSERT INTO pre_go_acc_user_two_factor_9999 (user_id, two_factor_auth_type, two_factor_email, two_factor_auth_secret, two_factor_is_active, two_factor_created_at, two_factor_updated_at)
+INSERT INTO user_two_factor (user_id, two_factor_auth_type, two_factor_email, two_factor_auth_secret, two_factor_is_active, two_factor_created_at, two_factor_updated_at)
 VALUES (?, ?, ?, "OTP", FALSE, NOW(), NOW())
 `
 
 type EnableTwoFactorTypeEmailParams struct {
 	UserID            uint32
-	TwoFactorAuthType PreGoAccUserTwoFactor9999TwoFactorAuthType
+	TwoFactorAuthType UserTwoFactorTwoFactorAuthType
 	TwoFactorEmail    sql.NullString
 }
 
-// file: 0004_pre_go_acc_user_two_factor_9999.sql
+// file: 0004_user_two_factor.sql
 // EnableTwoFactor
 func (q *Queries) EnableTwoFactorTypeEmail(ctx context.Context, arg EnableTwoFactorTypeEmailParams) error {
 	_, err := q.db.ExecContext(ctx, enableTwoFactorTypeEmail, arg.UserID, arg.TwoFactorAuthType, arg.TwoFactorEmail)
@@ -105,14 +105,14 @@ const getTwoFactorMethodByID = `-- name: GetTwoFactorMethodByID :one
 SELECT two_factor_id, user_id, two_factor_auth_type, two_factor_auth_secret, 
        two_factor_phone, two_factor_email, 
        two_factor_is_active, two_factor_created_at, two_factor_updated_at
-FROM pre_go_acc_user_two_factor_9999
+FROM user_two_factor
 WHERE two_factor_id = ?
 `
 
 // GetTwoFactorMethodByID
-func (q *Queries) GetTwoFactorMethodByID(ctx context.Context, twoFactorID uint32) (PreGoAccUserTwoFactor9999, error) {
+func (q *Queries) GetTwoFactorMethodByID(ctx context.Context, twoFactorID uint32) (UserTwoFactor, error) {
 	row := q.db.QueryRowContext(ctx, getTwoFactorMethodByID, twoFactorID)
-	var i PreGoAccUserTwoFactor9999
+	var i UserTwoFactor
 	err := row.Scan(
 		&i.TwoFactorID,
 		&i.UserID,
@@ -131,19 +131,19 @@ const getTwoFactorMethodByIDAndType = `-- name: GetTwoFactorMethodByIDAndType :o
 SELECT two_factor_id, user_id, two_factor_auth_type, two_factor_auth_secret, 
        two_factor_phone, two_factor_email, 
        two_factor_is_active, two_factor_created_at, two_factor_updated_at
-FROM pre_go_acc_user_two_factor_9999
+FROM user_two_factor
 WHERE user_id = ? AND two_factor_auth_type = ?
 `
 
 type GetTwoFactorMethodByIDAndTypeParams struct {
 	UserID            uint32
-	TwoFactorAuthType PreGoAccUserTwoFactor9999TwoFactorAuthType
+	TwoFactorAuthType UserTwoFactorTwoFactorAuthType
 }
 
 // GetTwoFactorMethodByIDAndType: select lay email de sen otp
-func (q *Queries) GetTwoFactorMethodByIDAndType(ctx context.Context, arg GetTwoFactorMethodByIDAndTypeParams) (PreGoAccUserTwoFactor9999, error) {
+func (q *Queries) GetTwoFactorMethodByIDAndType(ctx context.Context, arg GetTwoFactorMethodByIDAndTypeParams) (UserTwoFactor, error) {
 	row := q.db.QueryRowContext(ctx, getTwoFactorMethodByIDAndType, arg.UserID, arg.TwoFactorAuthType)
-	var i PreGoAccUserTwoFactor9999
+	var i UserTwoFactor
 	err := row.Scan(
 		&i.TwoFactorID,
 		&i.UserID,
@@ -160,13 +160,13 @@ func (q *Queries) GetTwoFactorMethodByIDAndType(ctx context.Context, arg GetTwoF
 
 const getTwoFactorStatus = `-- name: GetTwoFactorStatus :one
 SELECT two_factor_is_active
-FROM pre_go_acc_user_two_factor_9999
+FROM user_two_factor
 WHERE user_id = ? AND two_factor_auth_type = ?
 `
 
 type GetTwoFactorStatusParams struct {
 	UserID            uint32
-	TwoFactorAuthType PreGoAccUserTwoFactor9999TwoFactorAuthType
+	TwoFactorAuthType UserTwoFactorTwoFactorAuthType
 }
 
 // GetTwoFactorStatus
@@ -181,20 +181,20 @@ const getUserTwoFactorMethods = `-- name: GetUserTwoFactorMethods :many
 SELECT two_factor_id, user_id, two_factor_auth_type, two_factor_auth_secret, 
        two_factor_phone, two_factor_email, 
        two_factor_is_active, two_factor_created_at, two_factor_updated_at
-FROM pre_go_acc_user_two_factor_9999
+FROM user_two_factor
 WHERE user_id = ?
 `
 
 // GetUserTwoFactorMethods
-func (q *Queries) GetUserTwoFactorMethods(ctx context.Context, userID uint32) ([]PreGoAccUserTwoFactor9999, error) {
+func (q *Queries) GetUserTwoFactorMethods(ctx context.Context, userID uint32) ([]UserTwoFactor, error) {
 	rows, err := q.db.QueryContext(ctx, getUserTwoFactorMethods, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []PreGoAccUserTwoFactor9999
+	var items []UserTwoFactor
 	for rows.Next() {
-		var i PreGoAccUserTwoFactor9999
+		var i UserTwoFactor
 		if err := rows.Scan(
 			&i.TwoFactorID,
 			&i.UserID,
@@ -221,7 +221,7 @@ func (q *Queries) GetUserTwoFactorMethods(ctx context.Context, userID uint32) ([
 
 const isTwoFactorEnabled = `-- name: IsTwoFactorEnabled :one
 SELECT COUNT(*)
-FROM pre_go_acc_user_two_factor_9999
+FROM user_two_factor
 WHERE user_id = ? AND two_factor_is_active = TRUE
 `
 
@@ -234,7 +234,7 @@ func (q *Queries) IsTwoFactorEnabled(ctx context.Context, userID uint32) (int64,
 }
 
 const reactivateTwoFactor = `-- name: ReactivateTwoFactor :exec
-UPDATE pre_go_acc_user_two_factor_9999
+UPDATE user_two_factor
 SET two_factor_is_active = TRUE, 
     two_factor_updated_at = NOW()
 WHERE user_id = ? AND two_factor_auth_type = ?
@@ -242,7 +242,7 @@ WHERE user_id = ? AND two_factor_auth_type = ?
 
 type ReactivateTwoFactorParams struct {
 	UserID            uint32
-	TwoFactorAuthType PreGoAccUserTwoFactor9999TwoFactorAuthType
+	TwoFactorAuthType UserTwoFactorTwoFactorAuthType
 }
 
 // ReactivateTwoFactor
@@ -252,13 +252,13 @@ func (q *Queries) ReactivateTwoFactor(ctx context.Context, arg ReactivateTwoFact
 }
 
 const removeTwoFactor = `-- name: RemoveTwoFactor :exec
-DELETE FROM pre_go_acc_user_two_factor_9999
+DELETE FROM user_two_factor
 WHERE user_id = ? AND two_factor_auth_type = ?
 `
 
 type RemoveTwoFactorParams struct {
 	UserID            uint32
-	TwoFactorAuthType PreGoAccUserTwoFactor9999TwoFactorAuthType
+	TwoFactorAuthType UserTwoFactorTwoFactorAuthType
 }
 
 // RemoveTwoFactor
@@ -268,14 +268,14 @@ func (q *Queries) RemoveTwoFactor(ctx context.Context, arg RemoveTwoFactorParams
 }
 
 const updateTwoFactorStatus = `-- name: UpdateTwoFactorStatus :exec
-UPDATE pre_go_acc_user_two_factor_9999
+UPDATE user_two_factor
 SET two_factor_is_active = TRUE, two_factor_updated_at = NOW()
 WHERE user_id = ? AND two_factor_auth_type = ? AND two_factor_is_active = FALSE
 `
 
 type UpdateTwoFactorStatusParams struct {
 	UserID            uint32
-	TwoFactorAuthType PreGoAccUserTwoFactor9999TwoFactorAuthType
+	TwoFactorAuthType UserTwoFactorTwoFactorAuthType
 }
 
 // UpdateTwoFactorStatusVerification
@@ -286,13 +286,13 @@ func (q *Queries) UpdateTwoFactorStatus(ctx context.Context, arg UpdateTwoFactor
 
 const verifyTwoFactor = `-- name: VerifyTwoFactor :one
 SELECT COUNT(*)
-FROM pre_go_acc_user_two_factor_9999
+FROM user_two_factor
 WHERE user_id = ? AND two_factor_auth_type = ? AND two_factor_is_active = TRUE
 `
 
 type VerifyTwoFactorParams struct {
 	UserID            uint32
-	TwoFactorAuthType PreGoAccUserTwoFactor9999TwoFactorAuthType
+	TwoFactorAuthType UserTwoFactorTwoFactorAuthType
 }
 
 // VerifyTwoFactor

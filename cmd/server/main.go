@@ -2,9 +2,11 @@ package main
 
 import (
 	"go-ecommerce-backend-api/m/v2/internal/initialize"
+	"go-ecommerce-backend-api/m/v2/third_party/ws"
 
 	_ "go-ecommerce-backend-api/m/v2/cmd/swag/docs"
 
+	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger" // swagger embed files
 )
@@ -24,8 +26,16 @@ import (
 // @host      localhost:1006
 // @BasePath  /v1/2024
 // @schema http
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+
 func main() {
 	r := initialize.Run()
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	cm := ws.NewConnectionManager()
+	r.GET("/ws", func(c *gin.Context) {
+		ws.HandleConnection(c, c.Writer, c.Request, cm)
+	})
 	r.Run(":1006")
 }
