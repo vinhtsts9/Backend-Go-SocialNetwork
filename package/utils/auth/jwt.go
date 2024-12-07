@@ -13,7 +13,7 @@ type PayloadClaims struct {
 }
 
 func GenTokenJWT(payload jwt.Claims) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, payload)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
 	return token.SignedString([]byte(global.Config.JWT.API_SECRET_KEY))
 }
 func CreateToken(uuidToken string) (string, error) {

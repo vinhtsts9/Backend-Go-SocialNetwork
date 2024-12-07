@@ -50,7 +50,7 @@ func (s *sUserLogin) SetupTwoFactorAuth(ctx context.Context, in *model.SetupTwoF
 	// 2. Create new type Authe
 	err = s.r.EnableTwoFactorTypeEmail(ctx, database.EnableTwoFactorTypeEmailParams{
 		UserID:            in.UserId,
-		TwoFactorAuthType: database.PreGoAccUserTwoFactor9999TwoFactorAuthTypeEMAIL,
+		TwoFactorAuthType: database.UserTwoFactorTwoFactorAuthTypeEMAIL,
 		TwoFactorEmail:    sql.NullString{String: in.TwoFactorEmail, Valid: true},
 	})
 	if err != nil {
@@ -87,7 +87,7 @@ func (s *sUserLogin) VerifyTwoFactorAuth(ctx context.Context, in *model.TwoFacto
 	// 4. Cập nhật trạng thái xác thực hai yếu tố
 	params := database.UpdateTwoFactorStatusParams{
 		UserID:            in.UserId,
-		TwoFactorAuthType: database.PreGoAccUserTwoFactor9999TwoFactorAuthTypeEMAIL,
+		TwoFactorAuthType: database.UserTwoFactorTwoFactorAuthTypeEMAIL,
 	}
 	err = s.r.UpdateTwoFactorStatus(ctx, params)
 	if err != nil {
@@ -99,13 +99,14 @@ func (s *sUserLogin) VerifyTwoFactorAuth(ctx context.Context, in *model.TwoFacto
 
 func (s *sUserLogin) Login(ctx context.Context, in *model.LoginInput) (codeResult int, out model.LoginOutPut, err error) {
 	// logic login
+	fmt.Println(in.UserAccount)
 	userBase, err := s.r.GetOneUserInfo(ctx, in.UserAccount)
 	if err != nil {
-		return response.ErrCodeAuthFailed, out, err
+		return 1, out, err
 	}
 	// 2. check password
 	if !crypto.MatchingPassword(userBase.UserPassword, in.UserPassword, userBase.UserSalt) {
-		return response.ErrCodeAuthFailed, out, fmt.Errorf("does not password")
+		return 2, out, fmt.Errorf("does not password")
 	}
 	// 3. Check two factor authentication
 
@@ -120,23 +121,23 @@ func (s *sUserLogin) Login(ctx context.Context, in *model.LoginInput) (codeResul
 	// 6. get user_info table
 	infoUser, err := s.r.GetUser(ctx, uint64(userBase.UserID))
 	if err != nil {
-		return response.ErrCodeAuthFailed, out, nil
+		return 3, out, nil
 	}
 
 	// convert to json
 	infoUserJson, err := json.Marshal(infoUser)
 	if err != nil {
-		return response.ErrCodeAuthFailed, out, fmt.Errorf("convert to json failed: %v", err)
+		return 4, out, fmt.Errorf("convert to json failed: %v", err)
 	}
 	// 7. give infoUserJson to redis with key = subToken
-	err = global.Rdb.Set(ctx, subToken, infoUserJson, time.Duration(consts.TIME_OTP_REGISTER)*time.Minute).Err()
+	err = global.Rdb.Set(ctx, subToken, infoUserJson, time.Duration(consts.TIME_OTP_REGISTER)*time.Hour).Err()
 	if err != nil {
-		return response.ErrCodeAuthFailed, out, err
+		return 5, out, err
 	}
 	// 8. create token
 	out.Token, err = auth.CreateToken(subToken)
 	if err != nil {
-		return response.ErrCodeAuthFailed, out, err
+		return 6, out, err
 	}
 	return 200, out, nil
 }
@@ -163,7 +164,7 @@ func (s *sUserLogin) Register(ctx context.Context, in *model.RegisterInput) (cod
 	switch {
 	case err == redis.Nil:
 		fmt.Println("Key doesnt exist")
-	case err != redis.Nil:
+	case err != nil:
 		fmt.Println("Get failed:", err)
 		return response.ErrInvalidOTP, err
 	case otpFound != "":
@@ -174,16 +175,18 @@ func (s *sUserLogin) Register(ctx context.Context, in *model.RegisterInput) (cod
 	if in.VerifyPurpose == "TEST_USER" {
 		otpNew = 123456
 	}
-	fmt.Printf("OTP is::%d\n", otpNew)
-	// 5. Save OTP in Redis with expiratonTime
 	err = global.Rdb.SetEx(ctx, userKey, strconv.Itoa(otpNew), time.Duration(consts.TIME_OTP_REGISTER)*time.Minute).Err()
 	if err != nil {
 		return response.ErrInvalidOTP, err
 	}
+
+	fmt.Printf("OTP is::%d\n", otpNew)
+	// 5. Save OTP in Redis with expiratonTime
+
 	// 6. Send OTP
 	switch in.VerifyType {
 	case consts.EMAIL:
-		err := sendto.SendEmailKafka([]string{in.VerifyKey}, strconv.Itoa(otpNew))
+		err := sendto.SendTextEmail([]string{in.VerifyKey}, "Vinhtiensinh17@gmail.com", strconv.Itoa(otpNew))
 		if err != nil {
 			return response.ErrSendEmailOtp, err
 		}

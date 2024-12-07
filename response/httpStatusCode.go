@@ -17,6 +17,11 @@ const (
 	ErrCodeOtpMismatch           = 60010
 	ErrCodeOtpDeleteFailed       = 60011
 	ErrCodeTwoFactorUpdateFailed = 60012
+	ErrCodePostFailed            = 70000
+	ErrCodeInternal              = 80000
+	ErrCodeNotFound              = 80008
+	ErrCodeComment               = 90000
+	ErrCodeCreateRoom            = 101
 )
 
 var msg = map[int]string{
@@ -33,4 +38,9 @@ var msg = map[int]string{
 	ErrCodeOtpMismatch:           "OTP does not match",
 	ErrCodeOtpDeleteFailed:       "Failed to delete OTP",
 	ErrCodeTwoFactorUpdateFailed: "Failed to update two-factor authentication status",
+	ErrCodePostFailed:            "ErrCodePostFailed",
+	ErrCodeInternal:              "ErrCodeInternal",
+	ErrCodeNotFound:              "ErrCodeNotFound",
+	ErrCodeComment:               "ErrCodeCommentFailed",
+	ErrCodeCreateRoom:            "ErrCodeCreateRoom",
 }

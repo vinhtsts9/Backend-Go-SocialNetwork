@@ -8,6 +8,7 @@ import (
 )
 
 var KafkaProducer *kafka.Writer
+var KafkaConsumer *kafka.Reader
 
 func InitKafKa() {
 	global.KafkaProducer = &kafka.Writer{
@@ -15,6 +16,11 @@ func InitKafKa() {
 		Topic:    "otp-auth-topic",
 		Balancer: &kafka.LeastBytes{},
 	}
+	global.KafkaConsumer = kafka.NewReader(kafka.ReaderConfig{
+		Brokers: []string{"localhost:9092"},
+		Topic:   "room",
+		GroupID: "chat-consumer-group",
+	})
 }
 
 func CloseKafka() {
