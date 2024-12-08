@@ -15,7 +15,7 @@
         },
         "version": "1.0.0"
     },
-    "host": "localhost:1006",
+    "host": "localhost:8080",
     "basePath": "/v1/2024",
     "paths": {
         "/chat/createRoom": {

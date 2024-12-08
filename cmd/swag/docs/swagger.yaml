@@ -110,7 +110,7 @@ definitions:
       message:
         type: string
     type: object
-host: localhost:1006
+host: localhost:8080
 info:
   contact:
     email: vinhtiensinh17@gmail.com

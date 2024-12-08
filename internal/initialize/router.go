@@ -3,7 +3,6 @@ package initialize
 import (
 	"go-ecommerce-backend-api/m/v2/global"
 	"go-ecommerce-backend-api/m/v2/internal/routers"
-	"go-ecommerce-backend-api/m/v2/third_party/ws"
 
 	"github.com/gin-gonic/gin"
 )
@@ -27,11 +26,8 @@ func InitRouter() *gin.Engine {
 
 	MainGroup := r.Group("/v1/2024")
 	{
-		cm := ws.NewConnectionManager()
 		MainGroup.GET("/checkStatus") //checking monitor
-		MainGroup.GET("/ws", func(c *gin.Context) {
-			ws.HandleConnection(c, c.Writer, c.Request, cm)
-		})
+
 	}
 	{
 		userRouter.InitUserRouter(MainGroup)

@@ -13,14 +13,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/redis/go-redis/v9"
 )
 
 var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		return true
+		return true // Cho phép tất cả origin (xem xét nếu cần bảo mật)
 	},
 }
 
@@ -78,14 +79,25 @@ func (cm *ConnectionManager) BroadcastToRoom(roomId int, message []byte) {
 
 }
 
-func HandleConnection(ctx *gin.Context, w http.ResponseWriter, r *http.Request, cm *ConnectionManager) {
+func HandleConnection(w http.ResponseWriter, r *http.Request, cm *ConnectionManager) {
+
 	tokenString := r.URL.Query().Get("token")
 	if tokenString == "" {
-		http.Error(w, "Unauthorized: missing token", http.StatusUnauthorized)
+		http.Error(w, "havnt gin.Context", http.StatusUnauthorized)
 		return
 	}
-	userId := auth.GetUserIdFromToken(ctx, tokenString)
+	userId := auth.GetUserIdFromToken(w, tokenString)
 	global.Logger.Sugar().Infof("User %s connected", userId)
+
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+	// Nếu là yêu cầu OPTIONS, trả về HTTP 200 OK để cho phép CORS
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -101,6 +113,7 @@ func HandleConnection(ctx *gin.Context, w http.ResponseWriter, r *http.Request, 
 
 	conn.SetReadDeadline(time.Now().Add(pongWait))
 	conn.SetPongHandler(func(string) error {
+		global.Logger.Sugar().Info("Pong received from client")
 		conn.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})
@@ -124,9 +137,9 @@ func HandleConnection(ctx *gin.Context, w http.ResponseWriter, r *http.Request, 
 		messageType, message, err := conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				global.Logger.Sugar().Errorf("WebSocket connection closed unexpectedly (userId: %s): %v", userId, err)
+				global.Logger.Sugar().Errorf("WebSocket connection closed unexpectedly (userId: %d): %v", userId, err)
 			} else {
-				global.Logger.Sugar().Errorf("Error reading WebSocket message (userId: %s): %v", userId, err)
+				global.Logger.Sugar().Errorf("Error reading WebSocket message (userId: %d): %v", userId, err)
 			}
 			return
 		}
@@ -149,7 +162,7 @@ func HandleConnection(ctx *gin.Context, w http.ResponseWriter, r *http.Request, 
 			continue
 		}
 
-		userId := auth.GetUserIdFromToken(ctx, msgToken)
+		userId := auth.GetUserIdFromToken(w, msgToken)
 		// lay thong tin
 		// Lấy và chuyển đổi giá trị room_id
 		roomIdFloat, ok := msgData["room_id"].(float64)

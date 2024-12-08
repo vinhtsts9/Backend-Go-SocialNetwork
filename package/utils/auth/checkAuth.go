@@ -5,36 +5,35 @@ import (
 	"encoding/json"
 	"go-ecommerce-backend-api/m/v2/global"
 	model "go-ecommerce-backend-api/m/v2/internal/models"
-	"go-ecommerce-backend-api/m/v2/response"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 )
 
-func CheckAuth(ctx *gin.Context, token string) *jwt.StandardClaims {
+func CheckAuth(w http.ResponseWriter, token string) *jwt.StandardClaims {
 	tokenString, ok := ExtractBearerToken(token)
 	if !ok {
-		response.ErrorResponse(ctx, http.StatusUnauthorized, "Missing or invalid token")
+		http.Error(w, "havnt gin.Context", http.StatusUnauthorized)
 	}
 	claims, err := VerifyTokenSubject(tokenString)
 	if err != nil {
-		response.ErrorResponse(ctx, http.StatusUnauthorized, "Missing or invalid token")
+		http.Error(w, "havnt gin.Context", http.StatusUnauthorized)
 	}
 	return claims
 }
 
-func GetUserIdFromToken(ctx *gin.Context, token string) int {
-	claims := CheckAuth(ctx, token)
+func GetUserIdFromToken(w http.ResponseWriter, token string) int {
+
+	claims := CheckAuth(w, token)
 
 	Result, err := global.Rdb.Get(context.Background(), claims.Subject).Result()
 	if err != nil {
-		response.ErrorResponse(ctx, http.StatusUnauthorized, "Session expried or invalid")
+		http.Error(w, "havnt gin.Context", http.StatusUnauthorized)
 	}
 	var userInfo model.UserInfo
 	err = json.Unmarshal([]byte(Result), &userInfo)
 	if err != nil {
-		response.ErrorResponse(ctx, http.StatusInternalServerError, "Internal Server Error")
+		http.Error(w, "havnt gin.Context", http.StatusUnauthorized)
 	}
 
 	userId := userInfo.UserID
