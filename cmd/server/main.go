@@ -1,8 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"go-ecommerce-backend-api/m/v2/internal/initialize"
-	"go-ecommerce-backend-api/m/v2/third_party/ws"
+	websocket "go-ecommerce-backend-api/m/v2/third_party/ws"
 	"log"
 	"net/http"
 
@@ -46,16 +47,18 @@ func main() {
 			log.Fatalf("Failed to start Gin server: %v", err)
 		}
 	}()
+	manager := websocket.NewConnectionManager()
 
-	// WebSocket server
-	cm := ws.NewConnectionManager()
-	http.HandleFunc("/v1/2024/ws", func(w http.ResponseWriter, r *http.Request) {
-		ws.HandleConnection(w, r, cm)
+	// Khởi chạy ConnectionManager trong một goroutine
+	go manager.Run()
+
+	// Cấu hình route để xử lý kết nối WebSocket
+	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		websocket.HandleConnections(manager, w, r)
 	})
 
-	// Start WebSocket server on a separate port
-	log.Println("Starting WebSocket server on :7000")
-	if err := http.ListenAndServe(":7000", nil); err != nil {
-		log.Fatalf("Failed to start WebSocket server: %v", err)
-	}
+	// Chạy server HTTP
+	port := "8888"
+	fmt.Printf("Server Websocket đang chạy tại http://localhost:%s\n", port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
