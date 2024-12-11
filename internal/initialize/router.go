@@ -16,6 +16,7 @@ func InitRouter() *gin.Engine {
 	} else {
 		gin.SetMode(gin.ReleaseMode)
 		r = gin.New()
+
 	}
 	// middlewares
 	// r.Use() logging
@@ -26,7 +27,7 @@ func InitRouter() *gin.Engine {
 
 	MainGroup := r.Group("/v1/2024")
 	{
-		MainGroup.GET("/checkStatus") //checking monitor
+		// MainGroup.GET("/checkStatus") //checking monitor
 
 	}
 	{

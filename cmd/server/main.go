@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"go-ecommerce-backend-api/m/v2/internal/initialize"
 	websocket "go-ecommerce-backend-api/m/v2/third_party/ws"
 	"log"
@@ -36,29 +35,27 @@ import (
 func main() {
 	// Gin for API
 	r := initialize.Run()
+
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	r.GET("/checkStatus", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
+	cm := websocket.NewConnectionManager()
+	cm.Run()
 
-	// Start Gin server
-	go func() {
-		if err := r.Run(":8080"); err != nil {
-			log.Fatalf("Failed to start Gin server: %v", err)
-		}
-	}()
-	manager := websocket.NewConnectionManager()
+	// Route WebSocket được xử lý trong Gin server
 
-	// Khởi chạy ConnectionManager trong một goroutine
-	go manager.Run()
-
-	// Cấu hình route để xử lý kết nối WebSocket
-	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		websocket.HandleConnections(manager, w, r)
+	r.GET("/ws", func(c *gin.Context) {
+		websocket.HandleConnections(c.Writer, c.Request, cm)
 	})
 
-	// Chạy server HTTP
-	port := "8888"
-	fmt.Printf("Server Websocket đang chạy tại http://localhost:%s\n", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Println("Starting server on :8080")
+
+	go func() {
+		log.Println("Starting server on :8080")
+		if err := r.Run(":8080"); err != nil {
+			log.Fatalf("Failed to start server: %v", err)
+		}
+	}()
+	select {}
 }

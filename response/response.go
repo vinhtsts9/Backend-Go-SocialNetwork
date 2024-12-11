@@ -33,4 +33,5 @@ func ErrorResponse(c *gin.Context, code int, message string) {
 		Message: message,
 		Data:    nil,
 	})
+	c.Abort()
 }

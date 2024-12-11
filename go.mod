@@ -21,6 +21,7 @@ require (
 	github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible // indirect
 	github.com/bmatcuk/doublestar/v4 v4.6.1 // indirect
 	github.com/casbin/govaluate v1.2.0 // indirect
+	github.com/gin-contrib/cors v1.7.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/ulule/limiter/v3 v3.11.2 // indirect
 )

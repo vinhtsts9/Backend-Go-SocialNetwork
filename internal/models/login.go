@@ -1,24 +1,40 @@
 package model
 
 import (
-	"database/sql"
 	"time"
 )
 
 type UserInfo struct {
-	UserID             int            `json:"UserID"`
-	UserAccount        string         `json:"UserAccount"`
-	UserNickname       sql.NullString `json:"UserNickname"`
-	UserAvatar         sql.NullString `json:"UserAvatar"`
-	UserState          int            `json:"UserState"`
-	UserMobile         sql.NullString `json:"UserMobile"`
-	UserGender         sql.NullInt16  `json:"UserGender"`
-	UserBirthday       sql.NullTime   `json:"UserBirthday"`
-	UserEmail          sql.NullString `json:"UserEmail"`
-	UserIsAuthencation int            `json:"UserIsAuthencation"`
-	CreatedAt          time.Time      `json:"CreatedAt"`
-	UpdatedAt          time.Time      `json:"UpdatedAt"`
+	UserID             int        `json:"UserID"`
+	UserAccount        string     `json:"UserAccount"`
+	UserNickname       NullString `json:"UserNickname"`
+	UserAvatar         NullString `json:"UserAvatar"`
+	UserState          int        `json:"UserState"`
+	UserMobile         NullString `json:"UserMobile"`
+	UserGender         NullInt16  `json:"UserGender"`
+	UserBirthday       NullTime   `json:"UserBirthday"`
+	UserEmail          NullString `json:"UserEmail"`
+	UserIsAuthencation int        `json:"UserIsAuthencation"`
+	CreatedAt          NullTime   `json:"CreatedAt"`
+	UpdatedAt          NullTime   `json:"UpdatedAt"`
 }
+
+// Các kiểu phụ trợ cho Null* (giống như trong database/sql)
+type NullString struct {
+	String string `json:"String"`
+	Valid  bool   `json:"Valid"`
+}
+
+type NullInt16 struct {
+	Int16 int16 `json:"Int16"`
+	Valid bool  `json:"Valid"`
+}
+
+type NullTime struct {
+	Time  time.Time `json:"Time"`
+	Valid bool      `json:"Valid"`
+}
+
 type Message struct {
 	MessageId      uint32 `json:"id"`
 	RoomId         uint32 `json:"room_id"`
