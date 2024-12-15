@@ -7,4 +7,5 @@ type UserRouterGroup struct {
 	RbacRouter
 	ChatRouter
 	CommentRouter
+	TimelineRouter
 }

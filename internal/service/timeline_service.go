@@ -1,10 +1,15 @@
 package service
 
-import model "go-ecommerce-backend-api/m/v2/internal/models"
+import (
+	model "go-ecommerce-backend-api/m/v2/internal/models"
+
+	"github.com/gin-gonic/gin"
+)
 
 type (
 	TimelineInterface interface {
-		GetTimeline(userId int) ([]model.Post, error)
+		GetAllPosts(ctx *gin.Context, userId int64) (codeRs int, data []model.Post, err error)
+		GetPostById(ctx *gin.Context, postId string) (codeRs int, data model.Post, err error)
 	}
 )
 
