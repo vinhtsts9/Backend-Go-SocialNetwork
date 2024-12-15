@@ -258,13 +258,13 @@ type Comment struct {
 	ID             int32
 	PostID         uint64
 	UserID         uint64
-	CommentContent sql.NullString
-	CommentLeft    sql.NullInt32
-	CommentRight   sql.NullInt32
-	CommentParent  sql.NullInt32
-	Isdeleted      sql.NullBool
 	CreatedAt      sql.NullTime
 	UpdatedAt      sql.NullTime
+	CommentContent string
+	CommentLeft    int32
+	CommentRight   int32
+	CommentParent  sql.NullInt32
+	Isdeleted      sql.NullBool
 }
 
 type Message struct {
@@ -341,7 +341,7 @@ type RoomMember struct {
 	JoinedAt sql.NullTime
 }
 
-// pre_go_acc_user_base_9999
+// user_base
 type UserBase struct {
 	UserID         int32
 	UserAccount    string
@@ -354,12 +354,19 @@ type UserBase struct {
 	UserUpdatedAt  sql.NullTime
 	// authentication is enable for the userbase
 	IsTwoFactorEnabled sql.NullInt32
+	// 1-online, 2-active,3-unactive
+	UserState uint8
 }
 
-// pre_go_acc_user_9999
+type UserFollow struct {
+	FollowID    int64
+	FollowerID  sql.NullInt64
+	FollowingID sql.NullInt64
+	CreatedAt   sql.NullTime
+}
+
+// user_info
 type UserInfo struct {
-	// User ID
-	UserID       uint64
 	UserAccount  string
 	UserNickname sql.NullString
 	UserAvatar   sql.NullString
@@ -374,6 +381,7 @@ type UserInfo struct {
 	CreatedAt sql.NullTime
 	// record update time
 	UpdatedAt sql.NullTime
+	UserID    uint64
 }
 
 type UserRole struct {

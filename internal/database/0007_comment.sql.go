@@ -26,9 +26,9 @@ VALUES (?, ?, ?, ?, ?, ?, ?)
 type CreateCommentParams struct {
 	PostID         uint64
 	UserID         uint64
-	CommentContent sql.NullString
-	CommentLeft    sql.NullInt32
-	CommentRight   sql.NullInt32
+	CommentContent string
+	CommentLeft    int32
+	CommentRight   int32
 	CommentParent  sql.NullInt32
 	Isdeleted      sql.NullBool
 }
@@ -55,8 +55,8 @@ and comment_right <= ?
 
 type DeleteCommentsInRangeParams struct {
 	PostID       uint64
-	CommentLeft  sql.NullInt32
-	CommentRight sql.NullInt32
+	CommentLeft  int32
+	CommentRight int32
 }
 
 func (q *Queries) DeleteCommentsInRange(ctx context.Context, arg DeleteCommentsInRangeParams) error {
@@ -65,7 +65,7 @@ func (q *Queries) DeleteCommentsInRange(ctx context.Context, arg DeleteCommentsI
 }
 
 const getCommentByID = `-- name: GetCommentByID :one
-SELECT id, post_id, user_id, comment_content, comment_left, comment_right, comment_parent, isdeleted, created_at, updated_at 
+SELECT id, post_id, user_id, created_at, updated_at, comment_content, comment_left, comment_right, comment_parent, isdeleted 
 FROM Comment
 WHERE id = ?
 `
@@ -77,19 +77,19 @@ func (q *Queries) GetCommentByID(ctx context.Context, id int32) (Comment, error)
 		&i.ID,
 		&i.PostID,
 		&i.UserID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 		&i.CommentContent,
 		&i.CommentLeft,
 		&i.CommentRight,
 		&i.CommentParent,
 		&i.Isdeleted,
-		&i.CreatedAt,
-		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getCommentByParentID = `-- name: GetCommentByParentID :many
-select c.id, c.post_id, c.user_id, c.comment_content, c.comment_left, c.comment_right, c.comment_parent, c.isdeleted, c.created_at, c.updated_at from Comment c 
+select c.id, c.post_id, c.user_id, c.created_at, c.updated_at, c.comment_content, c.comment_left, c.comment_right, c.comment_parent, c.isdeleted from Comment c 
 where c.post_id = ?
 and c.comment_left > ( select sub.comment_left from Comment sub where sub.id = ?)
 and c.comment_right < (select sub.comment_right from Comment sub where sub.id = ?)
@@ -118,13 +118,13 @@ func (q *Queries) GetCommentByParentID(ctx context.Context, arg GetCommentByPare
 			&i.ID,
 			&i.PostID,
 			&i.UserID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
 			&i.CommentContent,
 			&i.CommentLeft,
 			&i.CommentRight,
 			&i.CommentParent,
 			&i.Isdeleted,
-			&i.CreatedAt,
-			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -146,9 +146,9 @@ order by comment_right desc
 limit 1
 `
 
-func (q *Queries) GetMaxRightComment(ctx context.Context, postID uint64) (sql.NullInt32, error) {
+func (q *Queries) GetMaxRightComment(ctx context.Context, postID uint64) (int32, error) {
 	row := q.db.QueryRowContext(ctx, getMaxRightComment, postID)
-	var comment_right sql.NullInt32
+	var comment_right int32
 	err := row.Scan(&comment_right)
 	return comment_right, err
 }
@@ -161,9 +161,9 @@ and comment_left >= ?
 `
 
 type UpdateCommentLeftParams struct {
-	CommentLeft   sql.NullInt32
+	CommentLeft   int32
 	PostID        uint64
-	CommentLeft_2 sql.NullInt32
+	CommentLeft_2 int32
 }
 
 func (q *Queries) UpdateCommentLeft(ctx context.Context, arg UpdateCommentLeftParams) error {
@@ -174,11 +174,16 @@ func (q *Queries) UpdateCommentLeft(ctx context.Context, arg UpdateCommentLeftPa
 const updateCommentLeftCreate = `-- name: UpdateCommentLeftCreate :exec
 update Comment
 set comment_left = comment_left + 2
-where post_id = ? and comment_left > $2
+where post_id = ? and comment_left > ?
 `
 
-func (q *Queries) UpdateCommentLeftCreate(ctx context.Context, postID uint64) error {
-	_, err := q.db.ExecContext(ctx, updateCommentLeftCreate, postID)
+type UpdateCommentLeftCreateParams struct {
+	PostID      uint64
+	CommentLeft int32
+}
+
+func (q *Queries) UpdateCommentLeftCreate(ctx context.Context, arg UpdateCommentLeftCreateParams) error {
+	_, err := q.db.ExecContext(ctx, updateCommentLeftCreate, arg.PostID, arg.CommentLeft)
 	return err
 }
 
@@ -190,9 +195,9 @@ and comment_right >= ?
 `
 
 type UpdateCommentRightParams struct {
-	CommentRight   sql.NullInt32
+	CommentRight   int32
 	PostID         uint64
-	CommentRight_2 sql.NullInt32
+	CommentRight_2 int32
 }
 
 func (q *Queries) UpdateCommentRight(ctx context.Context, arg UpdateCommentRightParams) error {
@@ -203,10 +208,15 @@ func (q *Queries) UpdateCommentRight(ctx context.Context, arg UpdateCommentRight
 const updateCommentRightCreate = `-- name: UpdateCommentRightCreate :exec
 update Comment
 set comment_right = comment_right + 2
-where post_id = ? and comment_right >= $2
+where post_id = ? and comment_right >= ?
 `
 
-func (q *Queries) UpdateCommentRightCreate(ctx context.Context, postID uint64) error {
-	_, err := q.db.ExecContext(ctx, updateCommentRightCreate, postID)
+type UpdateCommentRightCreateParams struct {
+	PostID       uint64
+	CommentRight int32
+}
+
+func (q *Queries) UpdateCommentRightCreate(ctx context.Context, arg UpdateCommentRightCreateParams) error {
+	_, err := q.db.ExecContext(ctx, updateCommentRightCreate, arg.PostID, arg.CommentRight)
 	return err
 }

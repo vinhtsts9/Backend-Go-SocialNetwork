@@ -3,13 +3,7 @@
 ALTER TABLE pre_go_acc_user_verify_9999 RENAME TO user_verify;
 -- +goose StatementEnd
 
--- +goose StatementBegin
-ALTER TABLE pre_go_acc_user_base_9999 RENAME TO user_base;
--- +goose StatementEnd
 
--- +goose StatementBegin
-ALTER TABLE pre_go_acc_user_info_9999 RENAME TO user_info;
--- +goose StatementEnd
 
 -- +goose StatementBegin
 ALTER TABLE pre_go_acc_user_two_factor_9999 RENAME TO user_two_factor;

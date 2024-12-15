@@ -6,4 +6,5 @@ type UserRouterGroup struct {
 	PostRouter
 	RbacRouter
 	ChatRouter
+	CommentRouter
 }

@@ -15,7 +15,9 @@ func Run() *gin.Engine {
 	InitCasbin()
 	InitServiceInterface()
 	InitRedis()
-	InitKafKa()
+	InitKafka()
+	NewCloudinary()
+
 	r := InitRouter()
 	return r
 }

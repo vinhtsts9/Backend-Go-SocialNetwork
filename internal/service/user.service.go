@@ -1,7 +1,6 @@
 package service
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"go-ecommerce-backend-api/m/v2/global"
@@ -74,7 +73,7 @@ func (us *userService) Register(email string, purpose string) int {
 		Time:  time.Now(),
 	}
 
-	err = global.KafkaProducer.WriteMessages(context.Background(), message)
+	err = global.KafkaProducer.Send("send-email", message, 3)
 	if err != nil {
 		return response.ErrSendEmailOtp
 	}

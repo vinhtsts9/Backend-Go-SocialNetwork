@@ -24,6 +24,6 @@ func (u *userRepository) GetUserByEmail(email string) bool {
 
 func NewUserRepository() IUserRepository {
 	return &userRepository{
-		sqlc: database.New(global.Mdbc),
+		sqlc: database.New(global.MdbcHaproxy),
 	}
 }

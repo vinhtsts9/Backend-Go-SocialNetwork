@@ -1,15 +1,42 @@
 server:
   port: 
   mode: "dev"
-mysql: 
+mysql_haproxy: 
   host: 127.0.0.1
-  port: 8811
-  username: root
+  port: 3369
+  username: haproxy_check
   password: 123456
   dbname: test
   maxIdleConns: 10
   maxOpenConns: 100
   connMaxLifetime: 3600
+# mysql_slave: 
+#   host: 127.0.0.1
+#   port: 8822
+#   username: root
+#   password: 123456
+#   dbname: test
+#   maxIdleConns: 10
+#   maxOpenConns: 100
+#   connMaxLifetime: 3600
+# mysql_slave2: 
+#   host: 127.0.0.1
+#   port: 8823
+#   username: root
+#   password: 123456
+#   dbname: test
+#   maxIdleConns: 10
+#   maxOpenConns: 100
+#   connMaxLifetime: 3600
+# mysql_slave3: 
+#   host: 127.0.0.1
+#   port: 8824
+#   username: root
+#   password: 123456
+#   dbname: test
+#   maxIdleConns: 10
+#   maxOpenConns: 100
+#   connMaxLifetime: 3600
 log:
   log_level: debug
   file_log_name: ./storages/logs/dev.xxx.log
@@ -17,6 +44,8 @@ log:
   max_backups: 3
   max_age: 28
   compress: true
+kafka:
+  brokers: localhost:9092
 redis:
   host: 127.0.0.1
   port: 6379

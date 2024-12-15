@@ -128,7 +128,7 @@ func (q *Queries) EditUserByUserId(ctx context.Context, arg EditUserByUserIdPara
 }
 
 const findUsers = `-- name: FindUsers :many
-SELECT user_id, user_account, user_nickname, user_avatar, user_state, user_mobile, user_gender, user_birthday, user_email, user_is_authencation, created_at, updated_at FROM user_info WHERE user_account LIKE ? OR user_nickname LIKE ?
+SELECT user_account, user_nickname, user_avatar, user_state, user_mobile, user_gender, user_birthday, user_email, user_is_authencation, created_at, updated_at, user_id FROM user_info WHERE user_account LIKE ? OR user_nickname LIKE ?
 `
 
 type FindUsersParams struct {
@@ -146,7 +146,6 @@ func (q *Queries) FindUsers(ctx context.Context, arg FindUsersParams) ([]UserInf
 	for rows.Next() {
 		var i UserInfo
 		if err := rows.Scan(
-			&i.UserID,
 			&i.UserAccount,
 			&i.UserNickname,
 			&i.UserAvatar,
@@ -158,6 +157,7 @@ func (q *Queries) FindUsers(ctx context.Context, arg FindUsersParams) ([]UserInf
 			&i.UserIsAuthencation,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.UserID,
 		); err != nil {
 			return nil, err
 		}
@@ -190,9 +190,24 @@ FROM ` + "`" + `user_info` + "`" + `
 WHERE user_id = ? LIMIT 1
 `
 
-func (q *Queries) GetUser(ctx context.Context, userID uint64) (UserInfo, error) {
+type GetUserRow struct {
+	UserID             uint64
+	UserAccount        string
+	UserNickname       sql.NullString
+	UserAvatar         sql.NullString
+	UserState          uint8
+	UserMobile         sql.NullString
+	UserGender         sql.NullInt16
+	UserBirthday       sql.NullTime
+	UserEmail          sql.NullString
+	UserIsAuthencation uint8
+	CreatedAt          sql.NullTime
+	UpdatedAt          sql.NullTime
+}
+
+func (q *Queries) GetUser(ctx context.Context, userID uint64) (GetUserRow, error) {
 	row := q.db.QueryRowContext(ctx, getUser, userID)
-	var i UserInfo
+	var i GetUserRow
 	err := row.Scan(
 		&i.UserID,
 		&i.UserAccount,
@@ -228,15 +243,30 @@ FROM ` + "`" + `user_info` + "`" + `
 WHERE user_id IN (?)
 `
 
-func (q *Queries) GetUsers(ctx context.Context, userID uint64) ([]UserInfo, error) {
+type GetUsersRow struct {
+	UserID             uint64
+	UserAccount        string
+	UserNickname       sql.NullString
+	UserAvatar         sql.NullString
+	UserState          uint8
+	UserMobile         sql.NullString
+	UserGender         sql.NullInt16
+	UserBirthday       sql.NullTime
+	UserEmail          sql.NullString
+	UserIsAuthencation uint8
+	CreatedAt          sql.NullTime
+	UpdatedAt          sql.NullTime
+}
+
+func (q *Queries) GetUsers(ctx context.Context, userID uint64) ([]GetUsersRow, error) {
 	rows, err := q.db.QueryContext(ctx, getUsers, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []UserInfo
+	var items []GetUsersRow
 	for rows.Next() {
-		var i UserInfo
+		var i GetUsersRow
 		if err := rows.Scan(
 			&i.UserID,
 			&i.UserAccount,
@@ -265,7 +295,7 @@ func (q *Queries) GetUsers(ctx context.Context, userID uint64) ([]UserInfo, erro
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT user_id, user_account, user_nickname, user_avatar, user_state, user_mobile, user_gender, user_birthday, user_email, user_is_authencation, created_at, updated_at FROM user_info LIMIT ? OFFSET ?
+SELECT user_account, user_nickname, user_avatar, user_state, user_mobile, user_gender, user_birthday, user_email, user_is_authencation, created_at, updated_at, user_id FROM user_info LIMIT ? OFFSET ?
 `
 
 type ListUsersParams struct {
@@ -283,7 +313,6 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]UserInf
 	for rows.Next() {
 		var i UserInfo
 		if err := rows.Scan(
-			&i.UserID,
 			&i.UserAccount,
 			&i.UserNickname,
 			&i.UserAvatar,
@@ -295,6 +324,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]UserInf
 			&i.UserIsAuthencation,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.UserID,
 		); err != nil {
 			return nil, err
 		}

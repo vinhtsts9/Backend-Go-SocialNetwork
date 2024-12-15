@@ -3,11 +3,14 @@ package impl
 import (
 	"context"
 	"database/sql"
+	"go-ecommerce-backend-api/m/v2/global"
 	"go-ecommerce-backend-api/m/v2/internal/database"
 	model "go-ecommerce-backend-api/m/v2/internal/models"
 	"go-ecommerce-backend-api/m/v2/response"
 	"sync"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type sComment struct {
@@ -20,46 +23,93 @@ func NewCommenService(r *database.Queries) *sComment {
 	}
 }
 
-func (s *sComment) CreateComment(Comment *model.CommentInput) (codeRs int, err error) {
-	parent, err := s.r.GetCommentByID(context.Background(), Comment.CommentParentId)
-	if err != nil {
-		return response.ErrCodeComment, err
-	}
-
+func (s *sComment) CreateComment(ctx *gin.Context, Comment *model.CreateCommentInput) (codeRs int, err error) {
+	reqCtx, cancel := context.WithTimeout(ctx.Request.Context(), 5*time.Second)
+	defer cancel()
 	var rightValue int32
-	if parent.CommentRight.Valid {
-		rightValue = parent.CommentRight.Int32
-
-		go s.r.UpdateCommentRightCreate(context.Background(), Comment.PostId)
-		go s.r.UpdateCommentLeftCreate(context.Background(), Comment.PostId)
+	global.Logger.Sugar().Info(Comment)
+	parent, err := s.r.GetCommentByID(reqCtx, Comment.CommentParentId)
+	if err != nil {
+		global.Logger.Sugar().Info(0)
+		rightValue = 0
 	} else {
-		MaxRightValue, err := s.r.GetMaxRightComment(context.Background(), Comment.PostId)
+		rightValue = parent.CommentRight
+		global.Logger.Sugar().Info(1)
+	}
+	if rightValue > 0 {
+
+		// Sử dụng WaitGroup để chờ đợi các goroutine hoàn thành
+		var wg sync.WaitGroup
+		wg.Add(2)
+
+		go func() {
+			defer wg.Done() // Đảm bảo goroutine này hoàn thành khi hết việc
+			params := database.UpdateCommentRightCreateParams{
+				PostID:       Comment.PostId,
+				CommentRight: rightValue,
+			}
+			if err := s.r.UpdateCommentRightCreate(reqCtx, params); err != nil {
+				global.Logger.Sugar().Error("update cmRight failed")
+			}
+		}()
+
+		go func() {
+			defer wg.Done()
+			params := database.UpdateCommentLeftCreateParams{
+				PostID:      Comment.PostId,
+				CommentLeft: rightValue,
+			}
+			if err := s.r.UpdateCommentLeftCreate(reqCtx, params); err != nil {
+				global.Logger.Sugar().Error("update cmLeft failed")
+			}
+		}()
+
+		// Chờ đợi các goroutines hoàn thành
+		wg.Wait()
+
+	} else {
+		MaxRightValue, err := s.r.GetMaxRightComment(reqCtx, Comment.PostId)
 		if err != nil {
-			return response.ErrCodeComment, err
-		}
-		if MaxRightValue.Valid {
-			rightValue = MaxRightValue.Int32 + 1
+			if err == sql.ErrNoRows {
+				rightValue = 1
+			} else {
+				return 1, err
+			}
 		} else {
-			rightValue = 1
+			rightValue = MaxRightValue + 1
 		}
+
 	}
+	global.Logger.Sugar().Info(2)
+
+	// Sử dụng goroutine cho CreateComment nhưng đợi kết quả hoàn thành (thông qua WaitGroup)
+
 	dbs := database.CreateCommentParams{
-		PostID: Comment.PostId,
-		UserID: Comment.UserId,
-		CommentContent: sql.NullString{
-			String: Comment.CommentContent,
-			Valid:  Comment.CommentContent != "",
+		PostID:         Comment.PostId,
+		UserID:         Comment.UserId,
+		CommentContent: Comment.CommentContent,
+		CommentLeft:    rightValue,
+		CommentRight:   rightValue + 1,
+		CommentParent: sql.NullInt32{
+			Int32: Comment.CommentParentId,
+			Valid: Comment.CommentParentId != 0,
 		},
-		CommentLeft:   sql.NullInt32{Int32: rightValue, Valid: true},
-		CommentRight:  sql.NullInt32{Int32: rightValue + 1, Valid: true},
-		CommentParent: sql.NullInt32{Int32: Comment.CommentParentId, Valid: true},
-		Isdeleted:     sql.NullBool{Bool: false},
+		Isdeleted: sql.NullBool{
+			Bool:  false,
+			Valid: true,
+		},
 	}
-	go s.r.CreateComment(context.Background(), dbs)
+	if err := s.r.CreateComment(reqCtx, dbs); err != nil {
+		global.Logger.Sugar().Error("Create comment failed", err)
+	}
+
+	// Chờ đợi goroutine hoàn thành
+
+	global.Logger.Sugar().Info(3)
 	return response.ErrCodeSuccess, nil
 }
 
-func (s *sComment) ListComments(modelInput *model.ListCommentInput) (codeRs int, out []model.ListCommentOutput, err error) {
+func (s *sComment) ListComments(modelInput *model.ListCommentInput) (codeRs int, err error, out []model.ListCommentOutput) {
 	query := database.GetCommentByParentIDParams{
 		PostID: modelInput.PostId,
 		ID:     modelInput.CommentParentId,
@@ -67,32 +117,32 @@ func (s *sComment) ListComments(modelInput *model.ListCommentInput) (codeRs int,
 	}
 	comments, err := s.r.GetCommentByParentID(context.Background(), query)
 	if err != nil {
-		return response.ErrCodeComment, nil, err
+		return response.ErrCodeComment, err, nil
 	}
 	var result []model.ListCommentOutput
 	for _, comment := range comments {
 		result = append(result, model.ListCommentOutput{
 			Id:              comment.ID,
 			PostId:          comment.PostID,
-			CommentContent:  comment.CommentContent.String,
+			CommentContent:  comment.CommentContent,
 			UserId:          comment.UserID,
 			CommentParentId: comment.CommentParent.Int32,
 			Isdeleted:       comment.Isdeleted.Bool,
 		})
 	}
-	return response.ErrCodeSuccess, result, nil
+	return response.ErrCodeSuccess, nil, result
 }
 
-func (s *sComment) DeleteComment(modelInput *model.DeleteCommentInput) (bool, error) {
+func (s *sComment) DeleteComment(modelInput *model.DeleteCommentInput) (codeRs int, err error, Rs bool) {
 	// 1. lay thong tin comment can xoa
 	comment, err := s.r.GetCommentByID(context.Background(), modelInput.Id)
 
 	if err != nil {
-		return false, err
+		return response.ErrCodeComment, err, false
 	}
 
-	left := comment.CommentLeft.Int32
-	right := comment.CommentRight.Int32
+	left := comment.CommentLeft
+	right := comment.CommentRight
 
 	width := right - left + 1
 
@@ -109,8 +159,8 @@ func (s *sComment) DeleteComment(modelInput *model.DeleteCommentInput) (bool, er
 		defer wg.Done()
 		if err := s.r.DeleteCommentsInRange(ctx, database.DeleteCommentsInRangeParams{
 			PostID:       modelInput.PostId,
-			CommentLeft:  sql.NullInt32{Int32: left, Valid: true},
-			CommentRight: sql.NullInt32{Int32: right, Valid: true},
+			CommentLeft:  left,
+			CommentRight: right,
 		}); err != nil {
 			errChan <- err
 		}
@@ -121,8 +171,8 @@ func (s *sComment) DeleteComment(modelInput *model.DeleteCommentInput) (bool, er
 		defer wg.Done()
 		if err := s.r.UpdateCommentLeft(ctx, database.UpdateCommentLeftParams{
 			PostID:        modelInput.PostId,
-			CommentLeft:   sql.NullInt32{Int32: width},
-			CommentLeft_2: sql.NullInt32{Int32: right},
+			CommentLeft:   width,
+			CommentLeft_2: right,
 		}); err != nil {
 			errChan <- err
 		}
@@ -133,8 +183,8 @@ func (s *sComment) DeleteComment(modelInput *model.DeleteCommentInput) (bool, er
 	go func() {
 		if err := s.r.UpdateCommentRight(ctx, database.UpdateCommentRightParams{
 			PostID:         modelInput.PostId,
-			CommentRight:   sql.NullInt32{Int32: width},
-			CommentRight_2: sql.NullInt32{Int32: right},
+			CommentRight:   width,
+			CommentRight_2: right,
 		}); err != nil {
 			errChan <- err
 		}
@@ -145,8 +195,8 @@ func (s *sComment) DeleteComment(modelInput *model.DeleteCommentInput) (bool, er
 	// 7. Gom loi
 	for err := range errChan {
 		if err != nil {
-			return false, err
+			return response.ErrCodeComment, err, false
 		}
 	}
-	return true, nil
+	return response.ErrCodeSuccess, nil, true
 }

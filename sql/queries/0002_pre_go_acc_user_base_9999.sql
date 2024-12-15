@@ -3,6 +3,7 @@ SELECT user_id, user_account, user_password, user_salt
 FROM `user_base`
 WHERE user_account = ?;
 
+-- name: GetUserState :many
 -- name: GetOneUserInfoAdmin :one
 SELECT user_id, user_account, user_password, user_salt, user_login_time, user_logout_time, user_login_ip, user_created_at, user_updated_at
 FROM `user_base`
@@ -22,10 +23,10 @@ INSERT INTO user_base (
 
 -- name: LoginUserBase :exec
 UPDATE user_base
-SET user_login_time = NOW(), user_login_ip = ?
+SET user_login_time = NOW(), user_login_ip = ?, user_state = 1
 WHERE user_account = ? AND user_password = ?;
 
 -- name: LogoutUserBase :exec
 UPDATE user_base
-SET user_logout_time = NOW() 
+SET user_logout_time = NOW() , user_state = 2
 WHERE user_account = ?;

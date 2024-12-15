@@ -75,13 +75,59 @@ const docTemplate = `{
                 }
             }
         },
-        "/post/create": {
-            "post": {
-                "security": [
+        "/comment/{id}/{post_id}": {
+            "delete": {
+                "description": "Delete comment for the user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comment management"
+                ],
+                "summary": "Delete comment",
+                "parameters": [
                     {
-                        "BearerAuth": []
+                        "type": "integer",
+                        "description": "Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "PostId",
+                        "name": "post_id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResponseData"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseData"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseData"
+                        }
+                    }
+                }
+            }
+        },
+        "/post/create": {
+            "post": {
                 "description": "Create a new post for the user",
                 "consumes": [
                     "application/json"
@@ -141,7 +187,7 @@ const docTemplate = `{
                 "summary": "Delete a post",
                 "parameters": [
                     {
-                        "type": "string",
+                        "type": "integer",
                         "description": "Post ID",
                         "name": "id",
                         "in": "path",
@@ -177,7 +223,7 @@ const docTemplate = `{
                 "summary": "Update a post",
                 "parameters": [
                     {
-                        "type": "string",
+                        "type": "integer",
                         "description": "Post ID",
                         "name": "id",
                         "in": "path",

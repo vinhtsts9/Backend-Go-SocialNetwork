@@ -26,14 +26,13 @@ type cPost struct{}
 // @Failure      400  {object}  response.ErrorResponseData
 // @Failure      500  {object}  response.ErrorResponseData
 // @Router       /post/create [post]
-// @Security     BearerAuth
 func (c *cPost) CreatePost(ctx *gin.Context) {
 	var params model.CreatePostInput
 	if err := ctx.ShouldBindJSON(&params); err != nil {
 		response.ErrorResponse(ctx, response.ErrCodeParamInvalid, err.Error())
 		return
 	}
-	codeRs, dataRs, err := service.Post().CreatePost(ctx, &params)
+	codeRs, dataRs, err := service.NewPost().CreatePost(ctx, &params)
 	if err != nil {
 		global.Logger.Error("Error creating post", zap.Error(err))
 		response.ErrorResponse(ctx, response.ErrCodeInternal, err.Error())
@@ -48,7 +47,7 @@ func (c *cPost) CreatePost(ctx *gin.Context) {
 // @Tags         post management
 // @Accept       json
 // @Produce      json
-// @Param        id   path     string  true  "Post ID"
+// @Param        id   path     int  true  "Post ID"
 // @Param        payload body model.UpdatePostInput true "Updated Post Data"
 // @Success      200  {object}  response.ResponseData
 // @Failure      400  {object}  response.ErrorResponseData
@@ -61,7 +60,7 @@ func (c *cPost) UpdatePost(ctx *gin.Context) {
 		response.ErrorResponse(ctx, response.ErrCodeParamInvalid, err.Error())
 		return
 	}
-	codeRs, dataRs, err := service.Post().UpdatePost(ctx, id, &params)
+	codeRs, dataRs, err := service.NewPost().UpdatePost(ctx, id, &params)
 	if err != nil {
 		global.Logger.Error("Error updating post", zap.Error(err))
 		response.ErrorResponse(ctx, response.ErrCodeInternal, err.Error())
@@ -76,13 +75,13 @@ func (c *cPost) UpdatePost(ctx *gin.Context) {
 // @Tags         post management
 // @Accept       json
 // @Produce      json
-// @Param        id   path     string  true  "Post ID"
+// @Param        id   path     int  true  "Post ID"
 // @Success      204  {object}  response.ResponseData
 // @Failure      500  {object}  response.ErrorResponseData
 // @Router       /post/{id} [delete]
 func (c *cPost) DeletePost(ctx *gin.Context) {
 	id := ctx.Param("id")
-	codeRs, err := service.Post().DeletePost(ctx, id)
+	codeRs, err := service.NewPost().DeletePost(ctx, id)
 	if err != nil {
 		global.Logger.Error("Error deleting post", zap.Error(err))
 		response.ErrorResponse(ctx, response.ErrCodeInternal, err.Error())

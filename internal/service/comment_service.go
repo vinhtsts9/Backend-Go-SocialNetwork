@@ -1,15 +1,16 @@
 package service
 
 import (
-	"go-ecommerce-backend-api/m/v2/internal/database"
 	model "go-ecommerce-backend-api/m/v2/internal/models"
+
+	"github.com/gin-gonic/gin"
 )
 
 type (
 	IComment interface {
-		CreateComment(*model.CommentInput) (codeRs int, err error)
-		ListComments(*model.ListCommentInput) (codeRs int, err error, data []database.Comment)
-		DeleteComment(*model.DeleteCommentInput) (bool, error)
+		CreateComment(ctx *gin.Context, model *model.CreateCommentInput) (codeRs int, err error)
+		ListComments(*model.ListCommentInput) (codeRs int, err error, data []model.ListCommentOutput)
+		DeleteComment(*model.DeleteCommentInput) (codeRs int, err error, Rs bool)
 	}
 )
 

@@ -24,12 +24,12 @@ WHERE id = ?;
 -- name: UpdateCommentRightCreate :exec
 update Comment
 set comment_right = comment_right + 2
-where post_id = ? and comment_right >= $2;
+where post_id = ? and comment_right >= ?;
 
 -- name: UpdateCommentLeftCreate :exec
 update Comment
 set comment_left = comment_left + 2
-where post_id = ? and comment_left > $2;
+where post_id = ? and comment_left > ?;
 
 -- name: GetCommentByParentID :many
 select c.* from Comment c 

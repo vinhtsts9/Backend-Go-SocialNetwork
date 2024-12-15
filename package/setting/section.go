@@ -1,11 +1,14 @@
 package setting
 
 type Config struct {
-	Mysql  MySQLSetting  `mapstructure:"mysql"`
-	Logger LogSetting    `mapstructure:"log"`
-	Server ServerSetting `mapstructure:"server"`
-	Redis  RedisSetting  `mapstructure:"redis"`
-	JWT    JWTSetting    `mapstructure:"jwt"`
+	Logger       LogSetting    `mapstructure:"log"`
+	Server       ServerSetting `mapstructure:"server"`
+	Redis        RedisSetting  `mapstructure:"redis"`
+	JWT          JWTSetting    `mapstructure:"jwt"`
+	MySQLHaproxy MySQLSetting  `mapstructure:"mysql_haproxy"`
+	// MySQLSlave   MySQLSetting  `mapstructure:"mysql_slave"`
+	// MySQLSlave2  MySQLSetting  `mapstructure:"mysql_slave2"`
+	// MySQLSlave3  MySQLSetting  `mapstructure:"mysql_slave3"`
 }
 type ServerSetting struct {
 	Port int    `mapstructure:"port"`

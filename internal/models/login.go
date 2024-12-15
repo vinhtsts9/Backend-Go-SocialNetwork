@@ -1,6 +1,7 @@
 package model
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -17,6 +18,11 @@ type UserInfo struct {
 	UserIsAuthencation int        `json:"UserIsAuthencation"`
 	CreatedAt          NullTime   `json:"CreatedAt"`
 	UpdatedAt          NullTime   `json:"UpdatedAt"`
+}
+type UserBase struct {
+	UserID         int32
+	UserLogoutTime sql.NullTime
+	UserState      uint8
 }
 
 // Các kiểu phụ trợ cho Null* (giống như trong database/sql)
@@ -72,6 +78,9 @@ type LoginInput struct {
 type LoginOutPut struct {
 	Token   string `json:"token"`
 	Message string `json:"message"`
+}
+type LogoutInput struct {
+	TokenString string `json:"token"`
 }
 
 // two factor authentication

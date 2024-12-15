@@ -156,6 +156,40 @@ paths:
       summary: Create a new room
       tags:
       - chat management
+  /comment/{id}/{post_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete comment for the user
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: PostId
+        in: path
+        name: post_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.ResponseData'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponseData'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseData'
+      summary: Delete comment
+      tags:
+      - comment management
   /post/{id}:
     delete:
       consumes:
@@ -166,7 +200,7 @@ paths:
         in: path
         name: id
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:
@@ -190,7 +224,7 @@ paths:
         in: path
         name: id
         required: true
-        type: string
+        type: integer
       - description: Updated Post Data
         in: body
         name: payload
@@ -242,8 +276,6 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.ErrorResponseData'
-      security:
-      - BearerAuth: []
       summary: Create a new post
       tags:
       - post management

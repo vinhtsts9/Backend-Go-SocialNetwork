@@ -167,12 +167,12 @@ func HandleConnections(w http.ResponseWriter, r *http.Request, cm *ConnectionMan
 		fmt.Println("Server received message:", string(message))
 
 		// Xử lý thông điệp theo logic
-		cm.handleMessage(w, message, client)
+		cm.handleMessage(message, client)
 	}
 }
 
 // handleMessage xử lý thông điệp từ client
-func (cm *ConnectionManager) handleMessage(w http.ResponseWriter, message []byte, client *Client) {
+func (cm *ConnectionManager) handleMessage(message []byte, client *Client) {
 	var msgData map[string]interface{}
 	if err := json.Unmarshal(message, &msgData); err != nil {
 		client.Conn.WriteMessage(websocket.TextMessage, []byte("Invalid message formated"))
@@ -185,15 +185,15 @@ func (cm *ConnectionManager) handleMessage(w http.ResponseWriter, message []byte
 	case "auth":
 		tokenString := msgData["token"].(string)
 
-		userId := auth.GetUserIdFromToken(w, tokenString) // Xử lý token
-		if userId == 0 {
+		userInfo := auth.GetUserIdFromToken(tokenString) // Xử lý token
+		if userInfo.UserID == 0 {
 			client.Conn.WriteMessage(websocket.TextMessage, []byte("Authentication failed"))
 			return
 		}
 
-		global.Logger.Sugar().Infof("User %d authenticated", userId)
+		global.Logger.Sugar().Infof("User %d authenticated", userInfo.UserID)
 
-		client.UserID = userId
+		client.UserID = userInfo.UserID
 		client.Auth = true
 		client.Conn.WriteMessage(websocket.TextMessage, []byte("Authentication successfully"))
 

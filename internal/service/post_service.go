@@ -15,7 +15,7 @@ type (
 
 var localPost IPost
 
-func Post() IPost {
+func NewPost() IPost {
 	if localPost == nil {
 		panic("implement localPost notfound")
 	}

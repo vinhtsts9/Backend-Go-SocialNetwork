@@ -96,7 +96,24 @@ func (s *sUserLogin) VerifyTwoFactorAuth(ctx context.Context, in *model.TwoFacto
 
 	return response.ErrCodeSuccess, nil
 }
+func (s *sUserLogin) Logout(ctx context.Context, in *model.LogoutInput) (codeRs int, err error) {
+	claims := auth.CheckAuth(in.TokenString)
+	if err != nil {
+		return 1, fmt.Errorf("invalid token: %v", err)
+	}
+	err = global.Rdb.Del(ctx, claims.Subject).Err()
+	if err != nil {
+		return 2, fmt.Errorf("Failed to delete session from Redis: %v", err)
 
+	}
+	userAccount := auth.GetUserIdFromToken(in.TokenString)
+	err = s.r.LogoutUserBase(ctx, userAccount.UserAccount)
+	if err != nil {
+		return response.ErrCodeNotFound, err
+	}
+
+	return response.ErrCodeSuccess, nil
+}
 func (s *sUserLogin) Login(ctx context.Context, in *model.LoginInput) (codeResult int, out model.LoginOutPut, err error) {
 	// logic login
 	fmt.Println(in.UserAccount)

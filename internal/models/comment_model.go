@@ -1,6 +1,6 @@
 package model
 
-type CommentInput struct {
+type CreateCommentInput struct {
 	PostId          uint64 `json:"post_id"`
 	UserId          uint64 `json:"user_id"`
 	CommentContent  string `json:"comment_content"`

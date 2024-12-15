@@ -1,7 +1,6 @@
 package sendto
 
 import (
-	"context"
 	"encoding/json"
 	"go-ecommerce-backend-api/m/v2/global"
 	"time"
@@ -23,7 +22,7 @@ func SendEmailKafka(email []string, otp string) error {
 		Time:  time.Now(),
 	}
 
-	err := global.KafkaProducer.WriteMessages(context.Background(), message)
+	err := global.KafkaProducer.Send("send-email", message, 3)
 	if err != nil {
 		return err
 	}

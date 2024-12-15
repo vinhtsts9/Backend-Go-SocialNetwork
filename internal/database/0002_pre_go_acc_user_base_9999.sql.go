@@ -66,13 +66,13 @@ func (q *Queries) GetOneUserInfo(ctx context.Context, userAccount string) (GetOn
 	return i, err
 }
 
-const getOneUserInfoAdmin = `-- name: GetOneUserInfoAdmin :one
+const getUserState = `-- name: GetUserState :many
 SELECT user_id, user_account, user_password, user_salt, user_login_time, user_logout_time, user_login_ip, user_created_at, user_updated_at
 FROM ` + "`" + `user_base` + "`" + `
 WHERE user_account = ?
 `
 
-type GetOneUserInfoAdminRow struct {
+type GetUserStateRow struct {
 	UserID         int32
 	UserAccount    string
 	UserPassword   string
@@ -84,26 +84,42 @@ type GetOneUserInfoAdminRow struct {
 	UserUpdatedAt  sql.NullTime
 }
 
-func (q *Queries) GetOneUserInfoAdmin(ctx context.Context, userAccount string) (GetOneUserInfoAdminRow, error) {
-	row := q.db.QueryRowContext(ctx, getOneUserInfoAdmin, userAccount)
-	var i GetOneUserInfoAdminRow
-	err := row.Scan(
-		&i.UserID,
-		&i.UserAccount,
-		&i.UserPassword,
-		&i.UserSalt,
-		&i.UserLoginTime,
-		&i.UserLogoutTime,
-		&i.UserLoginIp,
-		&i.UserCreatedAt,
-		&i.UserUpdatedAt,
-	)
-	return i, err
+func (q *Queries) GetUserState(ctx context.Context, userAccount string) ([]GetUserStateRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUserState, userAccount)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUserStateRow
+	for rows.Next() {
+		var i GetUserStateRow
+		if err := rows.Scan(
+			&i.UserID,
+			&i.UserAccount,
+			&i.UserPassword,
+			&i.UserSalt,
+			&i.UserLoginTime,
+			&i.UserLogoutTime,
+			&i.UserLoginIp,
+			&i.UserCreatedAt,
+			&i.UserUpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const loginUserBase = `-- name: LoginUserBase :exec
 UPDATE user_base
-SET user_login_time = NOW(), user_login_ip = ?
+SET user_login_time = NOW(), user_login_ip = ?, user_state = 1
 WHERE user_account = ? AND user_password = ?
 `
 
@@ -120,7 +136,7 @@ func (q *Queries) LoginUserBase(ctx context.Context, arg LoginUserBaseParams) er
 
 const logoutUserBase = `-- name: LogoutUserBase :exec
 UPDATE user_base
-SET user_logout_time = NOW() 
+SET user_logout_time = NOW() , user_state = 2
 WHERE user_account = ?
 `
 
