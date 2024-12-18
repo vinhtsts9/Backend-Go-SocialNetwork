@@ -58,3 +58,7 @@ update Comment
 set comment_right = comment_right - ?
 where post_id = ?
 and comment_right >= ?;
+
+-- name: GetRootComment :many
+select * from Comment 
+where comment_parent is null and  post_id = ?;

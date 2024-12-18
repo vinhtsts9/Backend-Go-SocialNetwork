@@ -79,6 +79,22 @@ func (c *cComment) ListComment(ctx *gin.Context) {
 	}
 	response.SuccessResponse(ctx, codeRs, data)
 }
+func (c *cComment) ListCommentRoot(ctx *gin.Context) {
+	postID := ctx.Param("post_id")
+	postId, err := strconv.ParseUint(postID, 10, 64)
+	if err != nil {
+		response.ErrorResponse(ctx, response.ErrCodeComment, "Invalid post_id")
+	}
+
+	codeRs, err, data := service.NewICommnet().ListCommentRoot(ctx, postId)
+	if err != nil {
+		global.Logger.Sugar().Error("List comment error ", err)
+		response.ErrorResponse(ctx, response.ErrCodeComment, err.Error())
+		return
+	}
+	global.Logger.Sugar().Info(data)
+	response.SuccessResponse(ctx, codeRs, data)
+}
 
 // Deletecomment
 // @Summary      Delete comment

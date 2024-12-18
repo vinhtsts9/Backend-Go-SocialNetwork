@@ -2,6 +2,7 @@ package initialize
 
 import (
 	"go-ecommerce-backend-api/m/v2/global"
+	"go-ecommerce-backend-api/m/v2/internal/middlewares"
 	"go-ecommerce-backend-api/m/v2/internal/routers"
 
 	"github.com/gin-gonic/gin"
@@ -21,6 +22,7 @@ func InitRouter() *gin.Engine {
 	// middlewares
 	// r.Use() logging
 	// r.Use() cors
+	r.Use(middlewares.CORSMiddleware())
 	// r.Use() limiter global
 	manageRouter := routers.RouterGroupApp.Manage
 	userRouter := routers.RouterGroupApp.User

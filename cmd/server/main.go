@@ -35,7 +35,6 @@ import (
 func main() {
 	// Gin for API
 	r := initialize.Run()
-
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	r.GET("/checkStatus", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})

@@ -15,4 +15,5 @@ func InitServiceInterface() {
 	impl.NewPostProcessorImpl(queries)
 	service.InitIChat(impl.NewsChat(queries))
 	service.InitIComment(impl.NewCommenService(queries))
+	service.InitTimelineInterface(impl.NewTimelineImpl(queries))
 }

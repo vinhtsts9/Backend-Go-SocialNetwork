@@ -32,7 +32,7 @@ func initMysqlConnection(m setting.MySQLSetting) *sql.DB {
 func InitMysqlC() {
 	// Initialize MySQL Master connection
 	global.MdbcHaproxy = initMysqlConnection(global.Config.MySQLHaproxy)
-	SetPoolC(global.MdbcHaproxy)
+	SetPoolC()
 
 	// Initialize MySQL Slave connections
 	//InitMysqlSlaves()
@@ -56,11 +56,12 @@ func InitMysqlC() {
 // }
 
 // SetPoolC configures the connection pool settings for MySQL connections
-func SetPoolC(sqlDb *sql.DB) {
-	if sqlDb != nil {
-		var m *setting.MySQLSetting
-		sqlDb.SetConnMaxIdleTime(time.Duration(m.MaxIdleConnes) * time.Second)
-		sqlDb.SetConnMaxLifetime(time.Duration(m.ConnMaxLifetime) * time.Second)
-		sqlDb.SetMaxIdleConns(m.MaxOpenConnes)
-	}
+func SetPoolC() {
+	m := global.Config.MySQLHaproxy
+	sqlDb := global.MdbcHaproxy
+
+	sqlDb.SetConnMaxIdleTime(time.Duration(m.MaxIdleConnes))
+	sqlDb.SetConnMaxLifetime(time.Duration(m.ConnMaxLifetime))
+	sqlDb.SetMaxIdleConns(m.MaxOpenConnes)
+
 }

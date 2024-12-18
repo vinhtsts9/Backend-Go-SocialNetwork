@@ -153,6 +153,45 @@ func (q *Queries) GetMaxRightComment(ctx context.Context, postID uint64) (int32,
 	return comment_right, err
 }
 
+const getRootComment = `-- name: GetRootComment :many
+select id, post_id, user_id, created_at, updated_at, comment_content, comment_left, comment_right, comment_parent, isdeleted from Comment 
+where comment_parent is null and  post_id = ?
+`
+
+func (q *Queries) GetRootComment(ctx context.Context, postID uint64) ([]Comment, error) {
+	rows, err := q.db.QueryContext(ctx, getRootComment, postID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Comment
+	for rows.Next() {
+		var i Comment
+		if err := rows.Scan(
+			&i.ID,
+			&i.PostID,
+			&i.UserID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CommentContent,
+			&i.CommentLeft,
+			&i.CommentRight,
+			&i.CommentParent,
+			&i.Isdeleted,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateCommentLeft = `-- name: UpdateCommentLeft :exec
 update Comment 
 set comment_left = comment_left - ?

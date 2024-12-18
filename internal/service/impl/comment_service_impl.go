@@ -133,6 +133,25 @@ func (s *sComment) ListComments(modelInput *model.ListCommentInput) (codeRs int,
 	return response.ErrCodeSuccess, nil, result
 }
 
+func (s *sComment) ListCommentRoot(ctx *gin.Context, postId uint64) (codeRs int, err error, data []model.ListCommentOutput) {
+	comments, err := s.r.GetRootComment(ctx, postId)
+	if err != nil {
+		return response.ErrCodeComment, err, nil
+	}
+	global.Logger.Sugar().Info("result ", comments)
+	var result []model.ListCommentOutput
+	for _, comment := range comments {
+		result = append(result, model.ListCommentOutput{
+			Id:             comment.ID,
+			PostId:         comment.PostID,
+			CommentContent: comment.CommentContent,
+			UserId:         comment.UserID,
+			Isdeleted:      comment.Isdeleted.Bool,
+		})
+	}
+	return response.ErrCodeSuccess, nil, result
+}
+
 func (s *sComment) DeleteComment(modelInput *model.DeleteCommentInput) (codeRs int, err error, Rs bool) {
 	// 1. lay thong tin comment can xoa
 	comment, err := s.r.GetCommentByID(context.Background(), modelInput.Id)

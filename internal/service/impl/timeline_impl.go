@@ -1,12 +1,13 @@
 package impl
 
 import (
-	"context"
 	"fmt"
 	"go-ecommerce-backend-api/m/v2/internal/database"
 	model "go-ecommerce-backend-api/m/v2/internal/models"
 	"go-ecommerce-backend-api/m/v2/response"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type sTimeline struct {
@@ -21,7 +22,7 @@ func NewTimelineImpl(r *database.Queries) *sTimeline {
 }
 
 // GetAllPosts lấy danh sách tất cả bài viết
-func (s *sTimeline) GetAllPosts(ctx context.Context, userId int64) (codeRs int, data []model.Post, err error) {
+func (s *sTimeline) GetAllPosts(ctx *gin.Context, userId int64) (codeRs int, data []model.Post, err error) {
 	// Kiểm tra cache trước khi truy vấn database
 	cacheKey := fmt.Sprintf("timeline:%d", userId)
 	cachedPosts := getCache(cacheKey)
@@ -54,7 +55,7 @@ func (s *sTimeline) GetAllPosts(ctx context.Context, userId int64) (codeRs int, 
 }
 
 // GetPostById lấy bài viết theo ID
-func (s *sTimeline) GetPostById(ctx context.Context, postId string) (codeRs int, data model.Post, err error) {
+func (s *sTimeline) GetPostById(ctx *gin.Context, postId string) (codeRs int, data model.Post, err error) {
 	id, err := parsePostId(postId)
 	if err != nil {
 		return response.ErrCodePostFailed, model.Post{}, fmt.Errorf("invalid post ID: %v", err)
