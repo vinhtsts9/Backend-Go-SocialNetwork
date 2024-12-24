@@ -6,9 +6,9 @@ import (
 )
 
 func NewCloudinary() {
-	cloud_name := "vinhts"
-	api_key := "194494324816216"
-	api_secret := "qpmox9UBhnfx6I_gi-rO_eR2eRA"
+	cloud_name := ""
+	api_key := ""
+	api_secret := ""
 	Cloudinary, err := cloudinary.InitCloudinary(cloud_name, api_key, api_secret)
 	if err != nil {
 
