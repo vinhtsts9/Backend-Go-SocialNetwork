@@ -272,9 +272,10 @@ type Message struct {
 	RoomID         sql.NullInt32
 	SenderID       sql.NullInt64
 	MessageContext sql.NullString
-	MessageType    NullMessagesMessageType
+	MessageType    MessagesMessageType
 	IsPinned       sql.NullBool
 	IsAnnouncement sql.NullBool
+	UserNickname   string
 	CreatedAt      sql.NullTime
 }
 
@@ -295,14 +296,15 @@ type Permission struct {
 }
 
 type Post struct {
-	ID          uint64
-	UserID      uint64
-	Title       string
-	Content     json.RawMessage
-	CreatedAt   sql.NullTime
-	UpdatedAt   sql.NullTime
-	IsPublished sql.NullBool
-	Metadata    json.RawMessage
+	ID           uint64
+	UserID       uint64
+	Title        string
+	CreatedAt    sql.NullTime
+	UpdatedAt    sql.NullTime
+	IsPublished  sql.NullBool
+	Metadata     json.RawMessage
+	ImagePaths   json.RawMessage
+	UserNickname string
 }
 
 type Reaction struct {

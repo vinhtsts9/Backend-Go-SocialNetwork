@@ -2,6 +2,7 @@ package impl
 
 import (
 	"fmt"
+	"go-ecommerce-backend-api/m/v2/global"
 	"go-ecommerce-backend-api/m/v2/internal/database"
 	model "go-ecommerce-backend-api/m/v2/internal/models"
 	"go-ecommerce-backend-api/m/v2/response"
@@ -23,12 +24,12 @@ func NewTimelineImpl(r *database.Queries) *sTimeline {
 
 // GetAllPosts lấy danh sách tất cả bài viết
 func (s *sTimeline) GetAllPosts(ctx *gin.Context, userId int64) (codeRs int, data []model.Post, err error) {
-	// Kiểm tra cache trước khi truy vấn database
+	// // Kiểm tra cache trước khi truy vấn database
 	cacheKey := fmt.Sprintf("timeline:%d", userId)
-	cachedPosts := getCache(cacheKey)
-	if err == nil && cachedPosts != nil {
-		return response.ErrCodeSuccess, cachedPosts, nil
-	}
+	// cachedPosts := getCache(cacheKey)
+	// if err == nil && cachedPosts != nil {
+	// 	return response.ErrCodeSuccess, cachedPosts, nil
+	// }
 
 	// Nếu không có trong cache, truy vấn từ cơ sở dữ liệu
 	rows, err := s.r.GetAllpost(ctx)
@@ -39,18 +40,18 @@ func (s *sTimeline) GetAllPosts(ctx *gin.Context, userId int64) (codeRs int, dat
 	var posts []model.Post
 	for _, row := range rows {
 		posts = append(posts, model.Post{
-			ID:        uint32(row.ID),
-			UserID:    uint32(row.UserID),
-			Title:     row.Title,
-			Content:   string(row.Content),
-			CreatedAt: row.CreatedAt.Time.Format(time.RFC3339),
-			UpdatedAt: row.UpdatedAt.Time.Format(time.RFC3339),
+			ID:           uint32(row.ID),
+			UserNickname: row.UserNickname,
+			Title:        row.Title,
+			ImagePaths:   &row.ImagePaths,
+			CreatedAt:    row.CreatedAt.Time.Format(time.RFC3339),
+			UpdatedAt:    row.UpdatedAt.Time.Format(time.RFC3339),
 		})
 	}
 
 	// Lưu bài viết vào cache để sử dụng lần sau
 	setCache(cacheKey, posts)
-
+	global.Logger.Sugar().Info("all post:", posts)
 	return response.ErrCodeSuccess, posts, nil
 }
 
@@ -75,12 +76,12 @@ func (s *sTimeline) GetPostById(ctx *gin.Context, postId string) (codeRs int, da
 	}
 
 	post := model.Post{
-		ID:        uint32(row.ID),
-		UserID:    uint32(row.UserID),
-		Title:     row.Title,
-		Content:   string(row.Content),
-		CreatedAt: row.CreatedAt.Time.Format(time.RFC3339),
-		UpdatedAt: row.UpdatedAt.Time.Format(time.RFC3339),
+		ID:           uint32(row.ID),
+		UserNickname: row.UserNickname,
+		Title:        row.Title,
+		ImagePaths:   &row.ImagePaths,
+		CreatedAt:    row.CreatedAt.Time.Format(time.RFC3339),
+		UpdatedAt:    row.UpdatedAt.Time.Format(time.RFC3339),
 	}
 
 	// Lưu bài viết vào cache để sử dụng lần sau

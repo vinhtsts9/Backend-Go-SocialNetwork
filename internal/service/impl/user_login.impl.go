@@ -106,7 +106,7 @@ func (s *sUserLogin) Logout(ctx context.Context, in *model.LogoutInput) (codeRs 
 		return 2, fmt.Errorf("Failed to delete session from Redis: %v", err)
 
 	}
-	userAccount := auth.GetUserIdFromToken(in.TokenString)
+	userAccount := auth.GetUserInfoFromToken(in.TokenString)
 	err = s.r.LogoutUserBase(ctx, userAccount.UserAccount)
 	if err != nil {
 		return response.ErrCodeNotFound, err
@@ -140,7 +140,7 @@ func (s *sUserLogin) Login(ctx context.Context, in *model.LoginInput) (codeResul
 	if err != nil {
 		return 3, out, nil
 	}
-
+	out.UserNickname = infoUser.UserNickname.String
 	// convert to json
 	infoUserJson, err := json.Marshal(infoUser)
 	if err != nil {
@@ -255,12 +255,12 @@ func (s *sUserLogin) VerifyOTP(ctx context.Context, in *model.VerifyInput) (out 
 
 	out.Token = infoOTP.VerifyKeyHash
 	out.Message = "success"
-
+	global.Logger.Sugar().Info(out.Token)
 	return out, err
 }
 
-func (s *sUserLogin) UpdatePasswordRegister(ctx context.Context, token string, password string) (userId int, err error) {
-	infoOTP, err := s.r.GetInfoOTP(ctx, token)
+func (s *sUserLogin) UpdatePasswordRegister(ctx context.Context, model *model.UpdatePasswordRegisterInput) (userId int, err error) {
+	infoOTP, err := s.r.GetInfoOTP(ctx, model.UserToken)
 	if err != nil {
 		return response.ErrCodeUserOtpNotExists, err
 	}
@@ -276,7 +276,7 @@ func (s *sUserLogin) UpdatePasswordRegister(ctx context.Context, token string, p
 		return response.ErrCodeUserOtpNotExists, err
 	}
 	userBase.UserSalt = userSalt
-	userBase.UserPassword = crypto.HassPassword(password, userSalt)
+	userBase.UserPassword = crypto.HassPassword(model.UserPassword, userSalt)
 	// add userBase to userBase table
 	newUserBase, err := s.r.AddUserBase(ctx, userBase)
 	if err != nil {
@@ -286,16 +286,17 @@ func (s *sUserLogin) UpdatePasswordRegister(ctx context.Context, token string, p
 	if err != nil {
 		return response.ErrCodeUserOtpNotExists, err
 	}
+	global.Logger.Sugar().Info(model)
 	// add user_id to user_info table
 	newUserInfo, err := s.r.AddUserHaveUserId(ctx, database.AddUserHaveUserIdParams{
 		UserID:             uint64(user_id),
 		UserAccount:        infoOTP.VerifyKey,
-		UserNickname:       sql.NullString{String: infoOTP.VerifyKey, Valid: true},
-		UserAvatar:         sql.NullString{String: "", Valid: true},
+		UserNickname:       sql.NullString{String: model.UserNickname, Valid: true},
+		UserAvatar:         sql.NullString{String: model.UserAvatar, Valid: true},
 		UserState:          1,
-		UserMobile:         sql.NullString{String: "", Valid: true},
-		UserGender:         sql.NullInt16{Int16: 0, Valid: true},
-		UserBirthday:       sql.NullTime{Time: time.Time{}, Valid: false},
+		UserMobile:         sql.NullString{String: model.UserMobile, Valid: true},
+		UserGender:         sql.NullInt16{Int16: model.UserGender, Valid: true},
+		UserBirthday:       sql.NullTime{Time: model.UserBirthday, Valid: false},
 		UserEmail:          sql.NullString{String: infoOTP.VerifyKey, Valid: true},
 		UserIsAuthencation: 1,
 	})

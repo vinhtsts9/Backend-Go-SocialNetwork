@@ -22,6 +22,7 @@ const (
 	ErrCodeNotFound              = 80008
 	ErrCodeComment               = 90000
 	ErrCodeCreateRoom            = 101
+	ErrCodeGetMessage            = 102
 )
 
 var msg = map[int]string{
@@ -43,4 +44,5 @@ var msg = map[int]string{
 	ErrCodeNotFound:              "ErrCodeNotFound",
 	ErrCodeComment:               "ErrCodeCommentFailed",
 	ErrCodeCreateRoom:            "ErrCodeCreateRoom",
+	ErrCodeGetMessage:            "ErrCodeGetMessage",
 }

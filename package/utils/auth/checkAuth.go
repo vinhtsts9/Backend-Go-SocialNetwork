@@ -21,7 +21,7 @@ func CheckAuth(token string) *jwt.StandardClaims {
 	return claims
 }
 
-func GetUserIdFromToken(token string) model.UserInfo {
+func GetUserInfoFromToken(token string) model.UserInfo {
 
 	claims := CheckAuth(token)
 	if claims == nil {
@@ -33,8 +33,6 @@ func GetUserIdFromToken(token string) model.UserInfo {
 		return model.UserInfo{}
 
 	}
-	global.Logger.Sugar().Info(Result)
-
 	var userInfo model.UserInfo
 	err = json.Unmarshal([]byte(Result), &userInfo)
 	if err != nil {

@@ -16,7 +16,8 @@ var Timeline = new(cTimeline)
 
 func (c *cTimeline) GetAllPost(ctx *gin.Context) {
 	token := ctx.GetHeader("Authorization")
-	userInfo := auth.GetUserIdFromToken(token)
+	userInfo := auth.GetUserInfoFromToken(token)
+	global.Logger.Sugar().Info(userInfo.UserID)
 	codeRs, data, err := service.NewTimelineInterface().GetAllPosts(ctx, int64(userInfo.UserID))
 	if err != nil {
 		global.Logger.Sugar().Error("get post error ", err)

@@ -4,6 +4,7 @@ import (
 	model "go-ecommerce-backend-api/m/v2/internal/models"
 	"go-ecommerce-backend-api/m/v2/internal/service"
 	"go-ecommerce-backend-api/m/v2/response"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -36,4 +37,20 @@ func (c *cChat) CreateRoom(ctx *gin.Context) {
 		response.ErrorResponse(ctx, codeRs, err.Error())
 	}
 	response.SuccessResponse(ctx, codeRs, nil)
+}
+
+func (c *cChat) GetChatHistory(ctx *gin.Context) {
+	roomID := ctx.Param("room_id")
+	roomId, err := strconv.ParseInt(roomID, 10, 64)
+	if err != nil {
+		response.ErrorResponse(ctx, response.ErrCodeGetMessage, err.Error())
+		return
+	}
+	codeRs, err, data := service.NewIChat().GetChatHistory(ctx, int(roomId))
+	if err != nil {
+		response.ErrorResponse(ctx, response.ErrCodeGetMessage, err.Error())
+		return
+	}
+	response.SuccessResponse(ctx, codeRs, data)
+
 }

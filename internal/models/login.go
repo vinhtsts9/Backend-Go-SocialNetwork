@@ -68,16 +68,22 @@ type VerifyOTPOutput struct {
 }
 
 type UpdatePasswordRegisterInput struct {
-	UserToken    string `json:"user_token"`
-	UserPassword string `json:"user_password"`
+	UserToken    string    `json:"user_token"`
+	UserPassword string    `json:"user_password"`
+	UserNickname string    `json:"user_nickname"`
+	UserAvatar   string    `json:"user_avatar"`
+	UserMobile   string    `json:"user_mobile"`
+	UserGender   int16     `json:"user_gender"`
+	UserBirthday time.Time `json:"user_birthday"`
 }
 type LoginInput struct {
 	UserAccount  string `json:"user_account"`
 	UserPassword string `json:"user_password"`
 }
 type LoginOutPut struct {
-	Token   string `json:"token"`
-	Message string `json:"message"`
+	Token        string `json:"token"`
+	UserNickname string `json:"user_nickname"`
+	Message      string `json:"message"`
 }
 type LogoutInput struct {
 	TokenString string `json:"token"`
@@ -98,33 +104,36 @@ type TwoFactorVerificationInput struct {
 // Post
 // Model dùng để tạo mới Post
 type CreatePostInput struct {
-	UserID      uint64      `json:"user_id"`
-	Title       string      `json:"title"`
-	Content     interface{} `json:"content"` // JSON content in string format
-	IsPublished bool        `json:"is_published"`
-	Metadata    string      `json:"metadata"` // JSON metadata in string format
+	UserId       uint64      `json:"user_id"`
+	UserNickname string      `json:"user_nickname"`
+	Title        string      `json:"title"`
+	ImagePaths   interface{} `json:"image_paths"` // JSON content in string format
+	IsPublished  bool        `json:"is_published"`
+	Metadata     string      `json:"metadata"` // JSON metadata in string format
 }
 
 // Model dùng để cập nhật Post
 type UpdatePostInput struct {
-	ID          uint32      `json:"id"`
-	UserID      uint32      `json:"user_id"`
-	Title       string      `json:"title"`
-	Content     interface{} `json:"content"` // JSON content in string format
-	IsPublished bool        `json:"is_published"`
-	Metadata    string      `json:"metadata"` // JSON metadata in string format
+	ID           uint32      `json:"id"`
+	UserId       uint64      `json:"user_id"`
+	UserNickname string      `json:"user_nickname"`
+	Title        string      `json:"title"`
+	ImagePaths   interface{} `json:"image_paths"` // JSON content in string format
+	IsPublished  bool        `json:"is_published"`
+	Metadata     string      `json:"metadata"` // JSON metadata in string format
 }
 
 // Model Post trả về cho người dùng
 type Post struct {
-	ID          uint32      `json:"id"`
-	UserID      uint32      `json:"user_id"`
-	Title       string      `json:"title"`
-	Content     interface{} `json:"content"`
-	CreatedAt   string      `json:"created_at"` // Format time string
-	UpdatedAt   string      `json:"updated_at"` // Format time string
-	IsPublished bool        `json:"is_published"`
-	Metadata    string      `json:"metadata"`
+	ID           uint32      `json:"id"`
+	UserId       uint64      `json:"user_id"`
+	UserNickname string      `json:"user_nickname"`
+	Title        string      `json:"title"`
+	ImagePaths   interface{} `json:"image_paths"`
+	CreatedAt    string      `json:"created_at"` // Format time string
+	UpdatedAt    string      `json:"updated_at"` // Format time string
+	IsPublished  bool        `json:"is_published"`
+	Metadata     string      `json:"metadata"`
 }
 
 type CasbinPolicy struct {

@@ -9,6 +9,8 @@ import (
 type (
 	IChat interface {
 		CreateRoom(ctx *gin.Context, RoomModel *model.CreateRoom) (codeRs int, err error)
+		GetChatHistory(ctx *gin.Context, roomId int) (codeRs int, err error, rs []model.ModelChat)
+		SetChatHistory(ctx *gin.Context, model *model.ModelChat)
 	}
 )
 

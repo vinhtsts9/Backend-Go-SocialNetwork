@@ -2,10 +2,9 @@ package global
 
 import (
 	"database/sql"
+	"go-ecommerce-backend-api/m/v2/package/cloudinary"
 	"go-ecommerce-backend-api/m/v2/package/kafka"
 	"go-ecommerce-backend-api/m/v2/package/setting"
-
-	"go-ecommerce-backend-api/m/v2/package/cloudinary"
 
 	"github.com/casbin/casbin/v2"
 	"github.com/redis/go-redis/v9"

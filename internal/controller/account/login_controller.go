@@ -32,7 +32,7 @@ func (c *cUserLogin) UpdatePasswordRegister(ctx *gin.Context) {
 		response.ErrorResponse(ctx, response.ErrCodeParamInvalid, err.Error())
 		return
 	}
-	result, err := service.UserLogin().UpdatePasswordRegister(ctx, params.UserToken, params.UserPassword)
+	result, err := service.UserLogin().UpdatePasswordRegister(ctx, &params)
 	if err != nil {
 		response.ErrorResponse(ctx, response.ErrCodeParamInvalid, err.Error())
 		return

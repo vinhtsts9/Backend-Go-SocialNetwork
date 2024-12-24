@@ -92,7 +92,6 @@ func (c *cComment) ListCommentRoot(ctx *gin.Context) {
 		response.ErrorResponse(ctx, response.ErrCodeComment, err.Error())
 		return
 	}
-	global.Logger.Sugar().Info(data)
 	response.SuccessResponse(ctx, codeRs, data)
 }
 

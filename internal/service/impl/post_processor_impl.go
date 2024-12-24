@@ -34,7 +34,7 @@ func (s *sPostProcessor) ProcessPostMessage(ctx context.Context, topic string) {
 		}
 
 		// Truy vấn người theo dõi
-		followers, err := s.r.GetFollowersByUserId(ctx, sql.NullInt64{Int64: int64(post.UserID), Valid: true})
+		followers, err := s.r.GetFollowersByUserId(ctx, sql.NullInt64{Int64: int64(post.UserId), Valid: true})
 		if err != nil {
 			global.Logger.Sugar().Errorf("Failed to get followers: %v", err)
 			return err

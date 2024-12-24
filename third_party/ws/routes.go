@@ -1,21 +1,27 @@
 package websocket
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"go-ecommerce-backend-api/m/v2/global"
+	"go-ecommerce-backend-api/m/v2/internal/database"
+	model "go-ecommerce-backend-api/m/v2/internal/models"
+	"go-ecommerce-backend-api/m/v2/internal/service/impl"
 	"go-ecommerce-backend-api/m/v2/package/utils/auth"
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
 
 type Client struct {
-	UserID int
-	Conn   *websocket.Conn
-	Auth   bool
+	UserInfo *model.UserInfo
+	Conn     *websocket.Conn
+	Auth     bool
 }
 
 type ConnectionManager struct {
@@ -42,7 +48,8 @@ func (cm *ConnectionManager) Run() {
 		for {
 			select {
 			case client := <-cm.register:
-				cm.AddClient(client, client.UserID) // Giả định UserID là roomID
+
+				cm.clients[client.Conn] = client
 
 			case conn := <-cm.unregister:
 				cm.RemoveClient(conn)
@@ -60,10 +67,6 @@ func (cm *ConnectionManager) Run() {
 func (cm *ConnectionManager) AddClient(client *Client, roomID int) {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
-
-	// Thêm client vào danh sách tổng
-	cm.clients[client.Conn] = client
-
 	// Thêm client vào phòng
 	if _, exists := cm.roomUsers[roomID]; !exists {
 		cm.roomUsers[roomID] = make(map[*websocket.Conn]*Client)
@@ -99,6 +102,9 @@ func (cm *ConnectionManager) BroadcastToRoom(roomID int, message []byte) {
 
 	if clients, exists := cm.roomUsers[roomID]; exists {
 		for _, client := range clients {
+			// Ghi lại thông điệp trước khi gửi
+			global.Logger.Sugar().Infof("Sending message to room %d: %s", roomID, string(message))
+
 			err := client.Conn.WriteMessage(websocket.TextMessage, message)
 			if err != nil {
 				fmt.Println("Error sending message:", err)
@@ -109,10 +115,18 @@ func (cm *ConnectionManager) BroadcastToRoom(roomID int, message []byte) {
 	}
 }
 
+func (cm *ConnectionManager) checkAuth(client *Client) bool {
+	if !client.Auth {
+		client.Conn.WriteMessage(websocket.TextMessage, []byte("Authentication required"))
+		return false
+	}
+	return true
+}
+
 // HandleConnections xử lý các kết nối WebSocket
-func HandleConnections(w http.ResponseWriter, r *http.Request, cm *ConnectionManager) {
+func HandleConnections(ctx *gin.Context, cm *ConnectionManager) {
 	log.Println(1)
-	conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
 	if err != nil {
 		fmt.Println("Lỗi khi nâng cấp:", err)
 		return
@@ -167,12 +181,12 @@ func HandleConnections(w http.ResponseWriter, r *http.Request, cm *ConnectionMan
 		fmt.Println("Server received message:", string(message))
 
 		// Xử lý thông điệp theo logic
-		cm.handleMessage(message, client)
+		cm.handleMessage(message, client, ctx)
 	}
 }
 
 // handleMessage xử lý thông điệp từ client
-func (cm *ConnectionManager) handleMessage(message []byte, client *Client) {
+func (cm *ConnectionManager) handleMessage(message []byte, client *Client, ctx *gin.Context) {
 	var msgData map[string]interface{}
 	if err := json.Unmarshal(message, &msgData); err != nil {
 		client.Conn.WriteMessage(websocket.TextMessage, []byte("Invalid message formated"))
@@ -185,33 +199,71 @@ func (cm *ConnectionManager) handleMessage(message []byte, client *Client) {
 	case "auth":
 		tokenString := msgData["token"].(string)
 
-		userInfo := auth.GetUserIdFromToken(tokenString) // Xử lý token
+		userInfo := auth.GetUserInfoFromToken(tokenString) // Xử lý token
 		if userInfo.UserID == 0 {
-			client.Conn.WriteMessage(websocket.TextMessage, []byte("Authentication failed"))
+			client.Conn.WriteMessage(websocket.TextMessage, []byte("Authentication fail"))
 			return
 		}
 
 		global.Logger.Sugar().Infof("User %d authenticated", userInfo.UserID)
 
-		client.UserID = userInfo.UserID
+		client.UserInfo = &userInfo
 		client.Auth = true
 		client.Conn.WriteMessage(websocket.TextMessage, []byte("Authentication successfully"))
 
 	case "join":
+		if !cm.checkAuth(client) {
+			return
+		}
 		roomID := int(msgData["room_id"].(float64))
 		cm.AddClient(client, roomID)
 		client.Conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Joined room %d", roomID)))
 
 	case "leave":
+		if !cm.checkAuth(client) {
+			return
+		}
 		roomID := int(msgData["room_id"].(float64))
 		cm.RemoveClient(client.Conn)
-		client.Conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("User %d left room %d", client.UserID, roomID)))
+		client.Conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("User %s left room %d", client.UserInfo.UserAccount, roomID)))
 
 	case "send_message":
-
+		if !cm.checkAuth(client) {
+			return
+		}
 		roomID := int(msgData["room_id"].(float64))
+		typeMessage := msgData["message_type"].(string)
 		content := msgData["message"].(string)
-		cm.BroadcastToRoom(roomID, []byte(fmt.Sprintf("User %d: %s", client.UserID, content)))
+
+		// Tạo đối tượng ModelChat
+		chatMessage := model.ModelChat{
+			UserNickname:   client.UserInfo.UserNickname.String,
+			MessageContext: sql.NullString{String: content, Valid: true},
+			MessageType:    model.MessagesMessageType(typeMessage),
+			RoomId:         sql.NullInt32{Int32: int32(roomID), Valid: true},
+			CreatedAt:      sql.NullTime{Time: time.Now(), Valid: true}, // Thêm thời gian
+		}
+
+		// Ghi vào cơ sở dữ liệu
+		impl.NewsChat(database.New(global.MdbcHaproxy)).SetChatHistory(ctx, &chatMessage)
+
+		// Tạo thông điệp JSON để phát đến các client
+		messageToSend := model.ModelChat{
+			UserNickname:   chatMessage.UserNickname,
+			MessageContext: chatMessage.MessageContext,
+			MessageType:    model.MessagesMessageType(chatMessage.MessageType),
+			IsPinned:       chatMessage.IsPinned,
+			CreatedAt:      chatMessage.CreatedAt,
+		}
+		// Chuyển đổi thông điệp thành JSON
+		jsonMessage, err := json.Marshal(messageToSend)
+		if err != nil {
+			client.Conn.WriteMessage(websocket.TextMessage, []byte("Error formatting message"))
+			return
+		}
+
+		// Phát tin nhắn đến tất cả client trong phòng
+		cm.BroadcastToRoom(roomID, jsonMessage)
 
 	default:
 		client.Conn.WriteMessage(websocket.TextMessage, []byte("Invalid action"))

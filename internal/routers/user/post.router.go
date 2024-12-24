@@ -10,11 +10,9 @@ type PostRouter struct {
 }
 
 func (p *PostRouter) InitPostRouter(Router *gin.RouterGroup) {
-
 	postRouterPrivate := Router.Group("/post")
 
 	postRouterPrivate.POST("/create", post.Post.CreatePost)
 	postRouterPrivate.PATCH("/:id", post.Post.UpdatePost)
 	postRouterPrivate.DELETE("/:id", post.Post.DeletePost)
-
 }

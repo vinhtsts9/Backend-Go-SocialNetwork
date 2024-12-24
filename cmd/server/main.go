@@ -45,7 +45,7 @@ func main() {
 	// Route WebSocket được xử lý trong Gin server
 
 	r.GET("/ws", func(c *gin.Context) {
-		websocket.HandleConnections(c.Writer, c.Request, cm)
+		websocket.HandleConnections(c, cm)
 	})
 
 	log.Println("Starting server on :8080")

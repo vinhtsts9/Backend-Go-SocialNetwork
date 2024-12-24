@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"go-ecommerce-backend-api/m/v2/global"
 	"go-ecommerce-backend-api/m/v2/internal/database"
 	model "go-ecommerce-backend-api/m/v2/internal/models"
@@ -25,50 +24,21 @@ func NewPostImpl(r *database.Queries) *sPost {
 
 // CreatePost tạo một bài viết mới
 func (s *sPost) CreatePost(ctx context.Context, input *model.CreatePostInput) (codeRs int, data model.Post, err error) {
-	// Kiểm tra nếu content là một map JSON hợp lệ
-	contentMap, ok := input.Content.(map[string]interface{})
-	if !ok {
-		return response.ErrCodePostFailed, model.Post{}, errors.New("content must be a valid JSON object")
-	}
+	// Log đầu vào
+	global.Logger.Sugar().Info("Model create Post, %s", input)
 
-	// Kiểm tra và xử lý image_url hoặc image_path trong content
-	var imageUrl string
-	if urlStr, exists := contentMap["image_url"].(string); exists {
-		// Nếu có image_url, upload ảnh từ URL
-		uploadedUrl, err := global.Cloudinary.UploadImageFromURLToCloudinary(urlStr)
-		if err != nil {
-			return response.ErrCodePostFailed, model.Post{}, fmt.Errorf("failed to process image_url: %v", err)
-		}
-		imageUrl = uploadedUrl
-	} else if imagePath, exists := contentMap["image_path"].(string); exists {
-		// Nếu không có image_url nhưng có image_path (ảnh cục bộ)
-		uploadedUrl, err := global.Cloudinary.UploadImageToCloudinary(imagePath)
-		if err != nil {
-			return response.ErrCodePostFailed, model.Post{}, fmt.Errorf("failed to upload image: %v", err)
-		}
-		imageUrl = uploadedUrl
-		delete(contentMap, "image_path") // Xóa image_path nếu không cần thiết
-	} else {
-		// Nếu không có image_url hoặc image_path, yêu cầu phải có ít nhất một
-		return response.ErrCodePostFailed, model.Post{}, errors.New("either image_url or image_path must be provided")
-	}
-
-	// Gắn hoặc thay thế image_url trong content nếu có
-	if imageUrl != "" {
-		contentMap["image_url"] = imageUrl
-	}
-
-	// Serialize content để lưu vào database
-	contentJSON, err := json.Marshal(input.Content)
+	// Serialize image_paths để lưu vào database
+	contentJSON, err := json.Marshal(input.ImagePaths)
 	if err != nil {
-		return response.ErrCodePostFailed, model.Post{}, errors.New("failed to serialize post content")
+		return response.ErrCodePostFailed, model.Post{}, errors.New("failed to serialize image paths")
 	}
 
-	// Tạo đối tượng CreatePostParams để lưu
+	// Tạo đối tượng CreatePostParams để lưu vào DB
 	createPostParams := database.CreatePostParams{
-		Title:   input.Title,
-		Content: contentJSON,
-		UserID:  input.UserID,
+		Title:        input.Title,
+		ImagePaths:   contentJSON,
+		UserNickname: input.UserNickname,
+		UserID:       input.UserId,
 	}
 
 	// Lưu vào database
@@ -77,16 +47,16 @@ func (s *sPost) CreatePost(ctx context.Context, input *model.CreatePostInput) (c
 		return response.ErrCodePostFailed, model.Post{}, errors.New("failed to create post in database")
 	}
 
-	// Trả về bài viết
+	// Tạo đối tượng post để trả về
 	post := model.Post{
-		Title:     input.Title,
-		Content:   input.Content,
-		UserID:    uint32(input.UserID),
-		CreatedAt: time.Now().Format(time.RFC3339),
-		UpdatedAt: time.Now().Format(time.RFC3339),
+		Title:        input.Title,
+		ImagePaths:   input.ImagePaths, // Đây là danh sách file paths
+		UserNickname: input.UserNickname,
+		CreatedAt:    time.Now().Format(time.RFC3339),
+		UpdatedAt:    time.Now().Format(time.RFC3339),
 	}
 
-	// Gửi message vào Kafka
+	// Gửi message vào Kafka (nếu cần)
 	err = global.KafkaProducer.Send("create-post", post, 3)
 	if err != nil {
 		return response.ErrCodePostFailed, model.Post{}, errors.New("failed to send post data to Kafka")
@@ -102,16 +72,16 @@ func (s *sPost) UpdatePost(ctx context.Context, postId string, input *model.Upda
 		return response.ErrCodePostFailed, model.Post{}, err
 	}
 
-	content, err := json.Marshal(input.Content)
+	image_paths, err := json.Marshal(input.ImagePaths)
 	if err != nil {
 		return response.ErrCodePostFailed, model.Post{}, err
 	}
 
 	// Tạo đối tượng UpdatePostParams
 	updatePostParams := database.UpdatePostParams{
-		Title:   input.Title,
-		Content: content,
-		ID:      id,
+		Title:      input.Title,
+		ImagePaths: image_paths,
+		ID:         id,
 	}
 
 	// Gọi hàm cập nhật bài viết từ repository
@@ -122,11 +92,11 @@ func (s *sPost) UpdatePost(ctx context.Context, postId string, input *model.Upda
 
 	// Trả về bài viết đã được cập nhật
 	post := model.Post{
-		Title:     input.Title,
-		Content:   input.Content,
-		UserID:    uint32(input.UserID),  // Assuming UserID stays the same
-		CreatedAt: time.Now().GoString(), // Assuming created_at doesn't change on update
-		UpdatedAt: time.Now().GoString(),
+		Title:        input.Title,
+		ImagePaths:   input.ImagePaths,
+		UserNickname: input.UserNickname,    // Assuming UserID stays the same
+		CreatedAt:    time.Now().GoString(), // Assuming created_at doesn't change on update
+		UpdatedAt:    time.Now().GoString(),
 	}
 	return response.ErrCodeSuccess, post, nil
 }

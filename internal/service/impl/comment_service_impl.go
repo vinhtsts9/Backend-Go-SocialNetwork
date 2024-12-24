@@ -138,7 +138,6 @@ func (s *sComment) ListCommentRoot(ctx *gin.Context, postId uint64) (codeRs int,
 	if err != nil {
 		return response.ErrCodeComment, err, nil
 	}
-	global.Logger.Sugar().Info("result ", comments)
 	var result []model.ListCommentOutput
 	for _, comment := range comments {
 		result = append(result, model.ListCommentOutput{
