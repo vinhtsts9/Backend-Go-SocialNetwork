@@ -60,3 +60,40 @@ func (q *Queries) DeleteMemberFromRoomChat(ctx context.Context, arg DeleteMember
 	_, err := q.db.ExecContext(ctx, deleteMemberFromRoomChat, arg.UserID, arg.RoomID)
 	return err
 }
+
+const getRoomByUserId = `-- name: GetRoomByUserId :many
+SELECT rc.id, rc.name, rc.is_group, rc.admin_id, rc.avatar_url, rc.created_at 
+FROM room_chats rc
+JOIN room_members rb ON rc.id = rb.room_id
+WHERE rb.user_id = ?
+`
+
+func (q *Queries) GetRoomByUserId(ctx context.Context, userID uint64) ([]RoomChat, error) {
+	rows, err := q.db.QueryContext(ctx, getRoomByUserId, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []RoomChat
+	for rows.Next() {
+		var i RoomChat
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.IsGroup,
+			&i.AdminID,
+			&i.AvatarUrl,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

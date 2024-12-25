@@ -6,6 +6,7 @@ import (
 	"go-ecommerce-backend-api/m/v2/global"
 	model "go-ecommerce-backend-api/m/v2/internal/models"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 )
 
@@ -39,5 +40,17 @@ func GetUserInfoFromToken(token string) model.UserInfo {
 		return model.UserInfo{}
 	}
 
+	return userInfo
+}
+func GetUserInfoFromContext(ctx *gin.Context, Subject string) model.UserInfo {
+	Result, err := global.Rdb.Get(ctx, Subject).Result()
+	if err != nil {
+		return model.UserInfo{}
+	}
+	var userInfo model.UserInfo
+	err = json.Unmarshal([]byte(Result), &userInfo)
+	if err != nil {
+		return model.UserInfo{}
+	}
 	return userInfo
 }

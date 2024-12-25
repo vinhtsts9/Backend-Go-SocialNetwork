@@ -3,6 +3,7 @@ package chat
 import (
 	model "go-ecommerce-backend-api/m/v2/internal/models"
 	"go-ecommerce-backend-api/m/v2/internal/service"
+	"go-ecommerce-backend-api/m/v2/package/utils/auth"
 	"go-ecommerce-backend-api/m/v2/response"
 	"strconv"
 
@@ -53,4 +54,22 @@ func (c *cChat) GetChatHistory(ctx *gin.Context) {
 	}
 	response.SuccessResponse(ctx, codeRs, data)
 
+}
+func (c *cChat) GetRoomByUserId(ctx *gin.Context) {
+	subjectUUID := ctx.Request.Context().Value("subjectUUID")
+	var userInfo model.UserInfo
+
+	if uuid, ok := subjectUUID.(string); ok {
+		userInfo = auth.GetUserInfoFromContext(ctx, uuid)
+	} else {
+		response.ErrorResponse(ctx, response.ErrCodeParamInvalid, "Invalid subjectUUID")
+		return
+	}
+
+	codeRs, data, err := service.NewIChat().GetRoomChatByUserId(ctx, uint64(userInfo.UserID))
+	if err != nil {
+		response.ErrorResponse(ctx, response.ErrCodeGetMessage, err.Error())
+		return
+	}
+	response.SuccessResponse(ctx, codeRs, data)
 }

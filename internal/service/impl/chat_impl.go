@@ -35,6 +35,25 @@ func (s *sChat) CreateRoom(ctx *gin.Context, model *model.CreateRoom) (codeRs in
 	}
 	return response.ErrCodeSuccess, nil
 }
+
+func (s *sChat) GetRoomChatByUserId(ctx *gin.Context, userId uint64) (codeRs int, rs []model.CreateRoom, err error) {
+	Rows, err := s.r.GetRoomByUserId(ctx, userId)
+	if err != nil {
+		return response.ErrCodeCreateRoom, nil, err
+	}
+	var rooms []model.CreateRoom
+	for _, Row := range Rows {
+		room := model.CreateRoom{
+			NameRoom:  Row.Name,
+			IsGroup:   Row.IsGroup,
+			AdminId:   Row.AdminID,
+			AvatarUrl: Row.AvatarUrl,
+		}
+		rooms = append(rooms, room)
+	}
+	return response.ErrCodeSuccess, rooms, nil
+
+}
 func (s *sChat) GetChatHistory(ctx *gin.Context, roomId int) (codeRs int, err error, rs []model.ModelChat) {
 
 	rows, err := s.r.GetChatHistory(ctx, sql.NullInt32{Int32: int32(roomId), Valid: true})
