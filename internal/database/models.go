@@ -258,13 +258,15 @@ type Comment struct {
 	ID             int32
 	PostID         uint64
 	UserID         uint64
-	CreatedAt      sql.NullTime
 	UpdatedAt      sql.NullTime
 	CommentContent string
 	CommentLeft    int32
 	CommentRight   int32
 	CommentParent  sql.NullInt32
 	Isdeleted      sql.NullBool
+	UserNickname   string
+	ReplyCount     int32
+	CreatedAt      sql.NullTime
 }
 
 type Message struct {

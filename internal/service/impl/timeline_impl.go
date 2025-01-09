@@ -2,7 +2,6 @@ package impl
 
 import (
 	"fmt"
-	"go-ecommerce-backend-api/m/v2/global"
 	"go-ecommerce-backend-api/m/v2/internal/database"
 	model "go-ecommerce-backend-api/m/v2/internal/models"
 	"go-ecommerce-backend-api/m/v2/response"
@@ -51,7 +50,6 @@ func (s *sTimeline) GetAllPosts(ctx *gin.Context, userId int64) (codeRs int, dat
 
 	// Lưu bài viết vào cache để sử dụng lần sau
 	setCache(cacheKey, posts)
-	global.Logger.Sugar().Info("all post:", posts)
 	return response.ErrCodeSuccess, posts, nil
 }
 

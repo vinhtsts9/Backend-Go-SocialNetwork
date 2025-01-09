@@ -14,8 +14,7 @@ create table Comment (
 
     foreign key (post_id) references post(id),
     foreign key (user_id) references user_info(user_id) ,
-    foreign key (comment_parent) references Comment(id),
-    unique key (comment_left, comment_right)
+    foreign key (comment_parent) references Comment(id)
 )
 -- +goose StatementEnd
 

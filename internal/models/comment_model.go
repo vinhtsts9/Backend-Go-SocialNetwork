@@ -2,9 +2,9 @@ package model
 
 type CreateCommentInput struct {
 	PostId          uint64 `json:"post_id"`
-	UserId          uint64 `json:"user_id"`
 	CommentContent  string `json:"comment_content"`
 	CommentParentId int32  `json:"comment_parentId"`
+	UserNickname    string `json:"user_nickname"`
 }
 
 type ListCommentInput struct {
@@ -13,14 +13,16 @@ type ListCommentInput struct {
 }
 
 type ListCommentOutput struct {
-	Id              int32
-	PostId          uint64
-	UserId          uint64
-	CommentContent  string
-	CommentLeft     int32
-	CommentRight    int32
-	CommentParentId int32
-	Isdeleted       bool
+	Id              int32  `json:"comment_id"`
+	PostId          uint64 `json:"post_id"`
+	UserNickname    string `json:"user_nickname"`
+	CommentContent  string `json:"comment_content"`
+	CommentLeft     int32  `json:"comment_left"`
+	CommentRight    int32  `json:"comment_right"`
+	CommentParentId int32  `json:"comment_parentId"`
+	ReplyCount      int32  `json:"reply_count"`
+	Isdeleted       bool   `json:"isDeleted"`
+	CreatedAt       string `json:"created_at"`
 }
 
 type DeleteCommentInput struct {

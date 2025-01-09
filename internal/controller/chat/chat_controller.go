@@ -55,21 +55,65 @@ func (c *cChat) GetChatHistory(ctx *gin.Context) {
 	response.SuccessResponse(ctx, codeRs, data)
 
 }
-func (c *cChat) GetRoomByUserId(ctx *gin.Context) {
-	subjectUUID := ctx.Request.Context().Value("subjectUUID")
-	var userInfo model.UserInfo
-
-	if uuid, ok := subjectUUID.(string); ok {
-		userInfo = auth.GetUserInfoFromContext(ctx, uuid)
-	} else {
-		response.ErrorResponse(ctx, response.ErrCodeParamInvalid, "Invalid subjectUUID")
+func (c *cChat) GetUserNickName(ctx *gin.Context) {
+	codeRs, data, err := service.NewIChat().GetUserNickName(ctx)
+	if err != nil {
+		response.ErrorResponse(ctx, response.ErrCodeGetMessage, err.Error())
 		return
 	}
+	Result := struct {
+		UserNickName string `json:"user_nickname"`
+	}{
+		UserNickName: data,
+	}
+	response.SuccessResponse(ctx, codeRs, Result)
 
+}
+func (c *cChat) GetRoomByUserId(ctx *gin.Context) {
+
+	userInfo := auth.GetUserInfoFromContext(ctx)
 	codeRs, data, err := service.NewIChat().GetRoomChatByUserId(ctx, uint64(userInfo.UserID))
 	if err != nil {
 		response.ErrorResponse(ctx, response.ErrCodeGetMessage, err.Error())
 		return
 	}
 	response.SuccessResponse(ctx, codeRs, data)
+}
+
+func (c *cChat) DeleteMemberFromGroup(ctx *gin.Context) {
+	userIdP := ctx.Param("user_id")
+	userId, err := strconv.ParseUint(userIdP, 10, 64)
+	if err != nil {
+		response.ErrorResponse(ctx, response.ErrCodeGetMessage, err.Error())
+		return
+	}
+	roomIdP := ctx.Param("room_id")
+	roomId, err := strconv.ParseInt(roomIdP, 10, 64)
+	if err != nil {
+		response.ErrorResponse(ctx, response.ErrCodeGetMessage, err.Error())
+		return
+	}
+
+	codeRs, Rs, err := service.NewIChat().DeleteMemberFromGroup(ctx, userId, roomId)
+	if err != nil {
+		response.ErrorResponse(ctx, response.ErrCodeGetMessage, err.Error())
+		return
+	}
+	response.SuccessResponse(ctx, codeRs, Rs)
+}
+
+func (c *cChat) GetMemberGroup(ctx *gin.Context) {
+	roomIdP := ctx.Param("room_id")
+	roomId, err := strconv.ParseInt(roomIdP, 10, 64)
+	if err != nil {
+		response.ErrorResponse(ctx, response.ErrCodeGetMessage, err.Error())
+		return
+	}
+
+	codeRs, Rs, err := service.NewIChat().GetMemberGroup(ctx, roomId)
+	if err != nil {
+		response.ErrorResponse(ctx, response.ErrCodeGetMessage, err.Error())
+		return
+	}
+	response.SuccessResponse(ctx, codeRs, Rs)
 }

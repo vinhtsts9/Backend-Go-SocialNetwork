@@ -45,7 +45,12 @@ services:
      - 8083:8083
     links:
      - kafka
+    volumes:
+      - /opt/kafka/plugins:/kafka/connect/plugins
+      - /mysql/connectKafka:/kafka/connect/mysql
+
     environment:
+     - CONNECT_PLUGIN_PATH=/kafka/connect/plugins,/kafka/connect/mysql
      - BOOTSTRAP_SERVERS=demo_kafka:29092
      - GROUP_ID=1
      - CONFIG_STORAGE_TOPIC=my_connect_configs
@@ -56,6 +61,15 @@ services:
      - DATABASE_USER=root
      - DATABASE_PASSWORD=123456
      - DATABASE_NAME=test
+    networks:
+      - my_master_slave_sql
+  elasticsearch:
+    image: elasticsearch:7.17.25
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
     networks:
       - my_master_slave_sql
 

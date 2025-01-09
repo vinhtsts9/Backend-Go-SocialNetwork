@@ -6,6 +6,7 @@ import (
 	"go-ecommerce-backend-api/m/v2/global"
 	"go-ecommerce-backend-api/m/v2/internal/database"
 	model "go-ecommerce-backend-api/m/v2/internal/models"
+	"go-ecommerce-backend-api/m/v2/package/utils/auth"
 	"go-ecommerce-backend-api/m/v2/response"
 	"time"
 
@@ -44,6 +45,7 @@ func (s *sChat) GetRoomChatByUserId(ctx *gin.Context, userId uint64) (codeRs int
 	var rooms []model.CreateRoom
 	for _, Row := range Rows {
 		room := model.CreateRoom{
+			Id:        int32(Row.ID),
 			NameRoom:  Row.Name,
 			IsGroup:   Row.IsGroup,
 			AdminId:   Row.AdminID,
@@ -89,5 +91,40 @@ func (s *sChat) SetChatHistory(ctx *gin.Context, model *model.ModelChat) {
 		response.ErrorResponse(ctx, response.ErrCodeGetMessage, err.Error())
 		return
 	}
-	response.SuccessResponse(ctx, response.ErrCodeGetMessage, nil)
+}
+
+func (s *sChat) GetUserNickName(ctx *gin.Context) (codeRs int, rs string, err error) {
+	userInfo := auth.GetUserInfoFromContext(ctx)
+	if userInfo == (model.UserInfo{}) {
+		return response.ErrCodeGetMessage, "", err
+	}
+	return response.ErrCodeSuccess, userInfo.UserNickname.String, nil
+}
+
+func (s *sChat) DeleteMemberFromGroup(ctx *gin.Context, userid uint64, roomId int64) (codeRs int, Rs bool, err error) {
+	params := database.DeleteMemberFromRoomChatParams{
+		UserID: userid,
+		RoomID: roomId,
+	}
+	err = s.r.DeleteMemberFromRoomChat(ctx, params)
+	if err != nil {
+		return response.ErrCodeGetMessage, false, err
+	}
+	return response.ErrCodeSuccess, true, nil
+
+}
+func (s *sChat) GetMemberGroup(ctx *gin.Context, roomId int64) (codeRs int, Rs []model.UserSearch, err error) {
+	rows, err := s.r.GetMemberGroup(ctx, int64(roomId))
+	if err != nil {
+		return response.ErrCodeGetMessage, nil, err
+	}
+	var results []model.UserSearch
+	for _, row := range rows {
+		result := model.UserSearch{
+			UserNickname: row.UserNickname.String,
+			UserAvatar:   row.UserAvatar.String,
+		}
+		results = append(results, result)
+	}
+	return response.ErrCodeSuccess, results, nil
 }

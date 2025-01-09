@@ -4,18 +4,21 @@ where post_id = ?
 order by comment_right desc
 limit 1;
 
--- name: CreateComment :exec
+-- name: CreateComment :execresult
 INSERT INTO Comment (
     post_id, 
     user_id, 
+    user_nickname, 
     comment_content, 
     comment_left, 
     comment_right, 
     comment_parent, 
     isDeleted
 ) 
-VALUES (?, ?, ?, ?, ?, ?, ?);
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
+-- name: GetCommentByLastInsertId :one
+select * from Comment where id = ?;
 -- name: GetCommentByID :one
 SELECT * 
 FROM Comment
@@ -62,3 +65,8 @@ and comment_right >= ?;
 -- name: GetRootComment :many
 select * from Comment 
 where comment_parent is null and  post_id = ?;
+
+-- name: AddReplyCommentParent :exec
+update Comment
+set reply_count = reply_count + 1
+where id = ?;

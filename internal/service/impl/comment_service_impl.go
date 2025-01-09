@@ -23,7 +23,8 @@ func NewCommenService(r *database.Queries) *sComment {
 	}
 }
 
-func (s *sComment) CreateComment(ctx *gin.Context, Comment *model.CreateCommentInput) (codeRs int, err error) {
+func (s *sComment) CreateComment(ctx *gin.Context, Comment *model.CreateCommentInput, userId uint64) (codeRs int, RS model.ListCommentOutput, err error) {
+
 	reqCtx, cancel := context.WithTimeout(ctx.Request.Context(), 5*time.Second)
 	defer cancel()
 	var rightValue int32
@@ -40,8 +41,13 @@ func (s *sComment) CreateComment(ctx *gin.Context, Comment *model.CreateCommentI
 
 		// Sử dụng WaitGroup để chờ đợi các goroutine hoàn thành
 		var wg sync.WaitGroup
-		wg.Add(2)
-
+		wg.Add(3)
+		go func() {
+			defer wg.Done()
+			if err := s.r.AddReplyCommentParent(ctx, Comment.CommentParentId); err != nil {
+				global.Logger.Sugar().Error("update reply for parent failed")
+			}
+		}()
 		go func() {
 			defer wg.Done() // Đảm bảo goroutine này hoàn thành khi hết việc
 			params := database.UpdateCommentRightCreateParams{
@@ -73,7 +79,7 @@ func (s *sComment) CreateComment(ctx *gin.Context, Comment *model.CreateCommentI
 			if err == sql.ErrNoRows {
 				rightValue = 1
 			} else {
-				return 1, err
+				return 1, model.ListCommentOutput{}, err
 			}
 		} else {
 			rightValue = MaxRightValue + 1
@@ -86,7 +92,8 @@ func (s *sComment) CreateComment(ctx *gin.Context, Comment *model.CreateCommentI
 
 	dbs := database.CreateCommentParams{
 		PostID:         Comment.PostId,
-		UserID:         Comment.UserId,
+		UserID:         userId,
+		UserNickname:   Comment.UserNickname,
 		CommentContent: Comment.CommentContent,
 		CommentLeft:    rightValue,
 		CommentRight:   rightValue + 1,
@@ -99,17 +106,38 @@ func (s *sComment) CreateComment(ctx *gin.Context, Comment *model.CreateCommentI
 			Valid: true,
 		},
 	}
-	if err := s.r.CreateComment(reqCtx, dbs); err != nil {
+	result, err := s.r.CreateComment(reqCtx, dbs)
+	if err != nil {
 		global.Logger.Sugar().Error("Create comment failed", err)
 	}
 
-	// Chờ đợi goroutine hoàn thành
+	// Lấy ID của bản ghi vừa được chèn và kiểm tra lỗi
+	lastInsertId, err := result.LastInsertId()
+	if err != nil {
+		global.Logger.Sugar().Error("Failed to get last insert ID", err)
+		return
+	}
 
-	global.Logger.Sugar().Info(3)
-	return response.ErrCodeSuccess, nil
+	// Gọi hàm GetCommentByLastInsertId với ID vừa lấy được
+	CommentRs, err := s.r.GetCommentByLastInsertId(reqCtx, int32(lastInsertId))
+	if err != nil {
+		global.Logger.Sugar().Error("Get comment by last insert ID failed", err)
+		return
+	}
+	Rs := model.ListCommentOutput{
+		Id:              CommentRs.ID,
+		PostId:          CommentRs.PostID,
+		UserNickname:    CommentRs.UserNickname,
+		CommentContent:  CommentRs.CommentContent,
+		CommentParentId: CommentRs.CommentParent.Int32,
+		Isdeleted:       CommentRs.Isdeleted.Bool,
+		CreatedAt:       CommentRs.CreatedAt.Time.Format(time.RFC3339),
+	}
+
+	return response.ErrCodeSuccess, Rs, nil
 }
 
-func (s *sComment) ListComments(modelInput *model.ListCommentInput) (codeRs int, err error, out []model.ListCommentOutput) {
+func (s *sComment) ListComments(modelInput *model.ListCommentInput) (codeRs int, out []model.ListCommentOutput, err error) {
 	query := database.GetCommentByParentIDParams{
 		PostID: modelInput.PostId,
 		ID:     modelInput.CommentParentId,
@@ -117,38 +145,41 @@ func (s *sComment) ListComments(modelInput *model.ListCommentInput) (codeRs int,
 	}
 	comments, err := s.r.GetCommentByParentID(context.Background(), query)
 	if err != nil {
-		return response.ErrCodeComment, err, nil
-	}
-	var result []model.ListCommentOutput
-	for _, comment := range comments {
-		result = append(result, model.ListCommentOutput{
-			Id:              comment.ID,
-			PostId:          comment.PostID,
-			CommentContent:  comment.CommentContent,
-			UserId:          comment.UserID,
-			CommentParentId: comment.CommentParent.Int32,
-			Isdeleted:       comment.Isdeleted.Bool,
-		})
-	}
-	return response.ErrCodeSuccess, nil, result
-}
-
-func (s *sComment) ListCommentRoot(ctx *gin.Context, postId uint64) (codeRs int, err error, data []model.ListCommentOutput) {
-	comments, err := s.r.GetRootComment(ctx, postId)
-	if err != nil {
-		return response.ErrCodeComment, err, nil
+		return response.ErrCodeComment, nil, err
 	}
 	var result []model.ListCommentOutput
 	for _, comment := range comments {
 		result = append(result, model.ListCommentOutput{
 			Id:             comment.ID,
+			UserNickname:   comment.UserNickname,
+			ReplyCount:     comment.ReplyCount,
 			PostId:         comment.PostID,
 			CommentContent: comment.CommentContent,
-			UserId:         comment.UserID,
+			CreatedAt:      comment.CreatedAt.Time.Format(time.RFC3339),
 			Isdeleted:      comment.Isdeleted.Bool,
 		})
 	}
-	return response.ErrCodeSuccess, nil, result
+	return response.ErrCodeSuccess, result, nil
+}
+
+func (s *sComment) ListCommentRoot(ctx *gin.Context, postId uint64) (codeRs int, data []model.ListCommentOutput, err error) {
+	comments, err := s.r.GetRootComment(ctx, postId)
+	if err != nil {
+		return response.ErrCodeComment, nil, err
+	}
+	var result []model.ListCommentOutput
+	for _, comment := range comments {
+		result = append(result, model.ListCommentOutput{
+			Id:             comment.ID,
+			UserNickname:   comment.UserNickname,
+			PostId:         comment.PostID,
+			CommentContent: comment.CommentContent,
+			Isdeleted:      comment.Isdeleted.Bool,
+			ReplyCount:     comment.ReplyCount,
+			CreatedAt:      comment.CreatedAt.Time.Format(time.RFC3339),
+		})
+	}
+	return response.ErrCodeSuccess, result, nil
 }
 
 func (s *sComment) DeleteComment(modelInput *model.DeleteCommentInput) (codeRs int, err error, Rs bool) {

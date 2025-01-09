@@ -8,9 +8,9 @@ import (
 
 type (
 	IComment interface {
-		CreateComment(ctx *gin.Context, model *model.CreateCommentInput) (codeRs int, err error)
-		ListComments(*model.ListCommentInput) (codeRs int, err error, data []model.ListCommentOutput)
-		ListCommentRoot(ctx *gin.Context, postId uint64) (codeRs int, err error, data []model.ListCommentOutput)
+		CreateComment(ctx *gin.Context, model *model.CreateCommentInput, userId uint64) (codeRs int, rs model.ListCommentOutput, err error)
+		ListComments(*model.ListCommentInput) (codeRs int, data []model.ListCommentOutput, err error)
+		ListCommentRoot(ctx *gin.Context, postId uint64) (codeRs int, data []model.ListCommentOutput, err error)
 		DeleteComment(*model.DeleteCommentInput) (codeRs int, err error, Rs bool)
 	}
 )

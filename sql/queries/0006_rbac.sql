@@ -42,7 +42,7 @@ WHERE role_id = ? AND permission_id = ?;
 
 -- GetPermissionsByUserID
 -- name: GetPermissionsByUserID :many
-SELECT p.id, p.permission_name, p.resource, p.action
+SELECT distinct p.id, p.permission_name, p.resource, p.action
 FROM permissions p
 JOIN role_permissions rp ON p.id = rp.permission_id
 JOIN user_roles ur ON rp.role_id = ur.role_id
@@ -76,4 +76,4 @@ from user_roles ur,
 where ur.role_id = rp.role_id 
 and ur.user_id = ?   
 ) t
-where p.permission_id = t.permission_id;
+where p.id = t.permission_id;

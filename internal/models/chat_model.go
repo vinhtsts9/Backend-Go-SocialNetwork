@@ -5,6 +5,7 @@ import (
 )
 
 type CreateRoom struct {
+	Id        int32  `json:"room_id"`
 	NameRoom  string `json:"name"`
 	IsGroup   bool   `json:"is_group"`
 	AdminId   uint64 `json:"admin_id"`

@@ -23,6 +23,7 @@ func (c *cTimeline) GetAllPost(ctx *gin.Context) {
 		global.Logger.Sugar().Error("get post error ", err)
 		response.ErrorResponse(ctx, response.ErrCodePostFailed, "get posts failed")
 	}
+	global.Logger.Sugar().Info("Time of post", data)
 	response.SuccessResponse(ctx, codeRs, data)
 }
 

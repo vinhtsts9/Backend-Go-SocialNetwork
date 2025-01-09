@@ -10,22 +10,35 @@ import (
 	"database/sql"
 )
 
-const createComment = `-- name: CreateComment :exec
+const addReplyCommentParent = `-- name: AddReplyCommentParent :exec
+update Comment
+set reply_count = reply_count + 1
+where id = ?
+`
+
+func (q *Queries) AddReplyCommentParent(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, addReplyCommentParent, id)
+	return err
+}
+
+const createComment = `-- name: CreateComment :execresult
 INSERT INTO Comment (
     post_id, 
     user_id, 
+    user_nickname, 
     comment_content, 
     comment_left, 
     comment_right, 
     comment_parent, 
     isDeleted
 ) 
-VALUES (?, ?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 type CreateCommentParams struct {
 	PostID         uint64
 	UserID         uint64
+	UserNickname   string
 	CommentContent string
 	CommentLeft    int32
 	CommentRight   int32
@@ -33,17 +46,17 @@ type CreateCommentParams struct {
 	Isdeleted      sql.NullBool
 }
 
-func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) error {
-	_, err := q.db.ExecContext(ctx, createComment,
+func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createComment,
 		arg.PostID,
 		arg.UserID,
+		arg.UserNickname,
 		arg.CommentContent,
 		arg.CommentLeft,
 		arg.CommentRight,
 		arg.CommentParent,
 		arg.Isdeleted,
 	)
-	return err
 }
 
 const deleteCommentsInRange = `-- name: DeleteCommentsInRange :exec
@@ -65,7 +78,7 @@ func (q *Queries) DeleteCommentsInRange(ctx context.Context, arg DeleteCommentsI
 }
 
 const getCommentByID = `-- name: GetCommentByID :one
-SELECT id, post_id, user_id, created_at, updated_at, comment_content, comment_left, comment_right, comment_parent, isdeleted 
+SELECT id, post_id, user_id, updated_at, comment_content, comment_left, comment_right, comment_parent, isdeleted, user_nickname, reply_count, created_at 
 FROM Comment
 WHERE id = ?
 `
@@ -77,19 +90,45 @@ func (q *Queries) GetCommentByID(ctx context.Context, id int32) (Comment, error)
 		&i.ID,
 		&i.PostID,
 		&i.UserID,
-		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.CommentContent,
 		&i.CommentLeft,
 		&i.CommentRight,
 		&i.CommentParent,
 		&i.Isdeleted,
+		&i.UserNickname,
+		&i.ReplyCount,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getCommentByLastInsertId = `-- name: GetCommentByLastInsertId :one
+select id, post_id, user_id, updated_at, comment_content, comment_left, comment_right, comment_parent, isdeleted, user_nickname, reply_count, created_at from Comment where id = ?
+`
+
+func (q *Queries) GetCommentByLastInsertId(ctx context.Context, id int32) (Comment, error) {
+	row := q.db.QueryRowContext(ctx, getCommentByLastInsertId, id)
+	var i Comment
+	err := row.Scan(
+		&i.ID,
+		&i.PostID,
+		&i.UserID,
+		&i.UpdatedAt,
+		&i.CommentContent,
+		&i.CommentLeft,
+		&i.CommentRight,
+		&i.CommentParent,
+		&i.Isdeleted,
+		&i.UserNickname,
+		&i.ReplyCount,
+		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const getCommentByParentID = `-- name: GetCommentByParentID :many
-select c.id, c.post_id, c.user_id, c.created_at, c.updated_at, c.comment_content, c.comment_left, c.comment_right, c.comment_parent, c.isdeleted from Comment c 
+select c.id, c.post_id, c.user_id, c.updated_at, c.comment_content, c.comment_left, c.comment_right, c.comment_parent, c.isdeleted, c.user_nickname, c.reply_count, c.created_at from Comment c 
 where c.post_id = ?
 and c.comment_left > ( select sub.comment_left from Comment sub where sub.id = ?)
 and c.comment_right < (select sub.comment_right from Comment sub where sub.id = ?)
@@ -118,13 +157,15 @@ func (q *Queries) GetCommentByParentID(ctx context.Context, arg GetCommentByPare
 			&i.ID,
 			&i.PostID,
 			&i.UserID,
-			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.CommentContent,
 			&i.CommentLeft,
 			&i.CommentRight,
 			&i.CommentParent,
 			&i.Isdeleted,
+			&i.UserNickname,
+			&i.ReplyCount,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -154,7 +195,7 @@ func (q *Queries) GetMaxRightComment(ctx context.Context, postID uint64) (int32,
 }
 
 const getRootComment = `-- name: GetRootComment :many
-select id, post_id, user_id, created_at, updated_at, comment_content, comment_left, comment_right, comment_parent, isdeleted from Comment 
+select id, post_id, user_id, updated_at, comment_content, comment_left, comment_right, comment_parent, isdeleted, user_nickname, reply_count, created_at from Comment 
 where comment_parent is null and  post_id = ?
 `
 
@@ -171,13 +212,15 @@ func (q *Queries) GetRootComment(ctx context.Context, postID uint64) ([]Comment,
 			&i.ID,
 			&i.PostID,
 			&i.UserID,
-			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.CommentContent,
 			&i.CommentLeft,
 			&i.CommentRight,
 			&i.CommentParent,
 			&i.Isdeleted,
+			&i.UserNickname,
+			&i.ReplyCount,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}

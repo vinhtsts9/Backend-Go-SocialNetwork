@@ -42,8 +42,16 @@ func GetUserInfoFromToken(token string) model.UserInfo {
 
 	return userInfo
 }
-func GetUserInfoFromContext(ctx *gin.Context, Subject string) model.UserInfo {
-	Result, err := global.Rdb.Get(ctx, Subject).Result()
+func GetUserInfoFromContext(ctx *gin.Context) model.UserInfo {
+
+	Subject := ctx.Request.Context().Value("subjectUUID")
+	subjectStr, ok := Subject.(string)
+	if !ok {
+		// Xử lý lỗi khi ép kiểu không thành công
+		global.Logger.Sugar().Error("Subject is not a string")
+		return model.UserInfo{}
+	}
+	Result, err := global.Rdb.Get(ctx, subjectStr).Result()
 	if err != nil {
 		return model.UserInfo{}
 	}

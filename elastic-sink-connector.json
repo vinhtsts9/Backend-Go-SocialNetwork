@@ -1,0 +1,15 @@
+{
+    "name": "elasticsearch-sink-connector",
+    "config": {
+      "connector.class": "io.confluent.connect.elasticsearch.ElasticsearchSinkConnector",
+      "tasks.max": "1",
+      "topics.regex": "dbserver1\\.test\\..*",  
+      "connection.url": "http://elasticsearch:9200",  
+      "type.name": "_doc",  
+      "key.ignore": "true",
+      "schema.ignore": "true",
+      "flush.interval.ms": "10000",
+      "batch.size": "1000"
+    }
+  }
+  

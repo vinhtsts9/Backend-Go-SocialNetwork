@@ -1,9 +1,9 @@
 package comment
 
 import (
-	"go-ecommerce-backend-api/m/v2/global"
 	model "go-ecommerce-backend-api/m/v2/internal/models"
 	"go-ecommerce-backend-api/m/v2/internal/service"
+	"go-ecommerce-backend-api/m/v2/package/utils/auth"
 	"go-ecommerce-backend-api/m/v2/response"
 	"strconv"
 
@@ -27,19 +27,19 @@ var Comment = new(cComment)
 // @Router       /comment/create [post]
 
 func (c *cComment) CreateComment(ctx *gin.Context) {
+	userInfo := auth.GetUserInfoFromContext(ctx)
 	var params model.CreateCommentInput
 	if err := ctx.ShouldBindJSON(&params); err != nil {
 		response.ErrorResponse(ctx, response.ErrCodeComment, err.Error())
 		return
 	}
 
-	codeRs, err := service.NewICommnet().CreateComment(ctx, &params)
+	codeRs, Rs, err := service.NewICommnet().CreateComment(ctx, &params, uint64(userInfo.UserID))
 	if err != nil {
-		global.Logger.Sugar().Error("Create comment error:", err)
 		response.ErrorResponse(ctx, response.ErrCodeComment, err.Error())
 		return
 	}
-	response.SuccessResponse(ctx, codeRs, 1)
+	response.SuccessResponse(ctx, codeRs, Rs)
 }
 
 // Listcomment
@@ -71,9 +71,8 @@ func (c *cComment) ListComment(ctx *gin.Context) {
 		PostId:          postId,
 		CommentParentId: int32(commentParentID),
 	}
-	codeRs, err, data := service.NewICommnet().ListComments(&params)
+	codeRs, data, err := service.NewICommnet().ListComments(&params)
 	if err != nil {
-		global.Logger.Sugar().Error("List comment error ", err)
 		response.ErrorResponse(ctx, response.ErrCodeComment, err.Error())
 		return
 	}
@@ -86,9 +85,8 @@ func (c *cComment) ListCommentRoot(ctx *gin.Context) {
 		response.ErrorResponse(ctx, response.ErrCodeComment, "Invalid post_id")
 	}
 
-	codeRs, err, data := service.NewICommnet().ListCommentRoot(ctx, postId)
+	codeRs, data, err := service.NewICommnet().ListCommentRoot(ctx, postId)
 	if err != nil {
-		global.Logger.Sugar().Error("List comment error ", err)
 		response.ErrorResponse(ctx, response.ErrCodeComment, err.Error())
 		return
 	}
@@ -125,7 +123,6 @@ func (c *cComment) DeleteComment(ctx *gin.Context) {
 	}
 	codeRs, err, data := service.NewICommnet().DeleteComment(&params)
 	if err != nil {
-		global.Logger.Sugar().Error("Delete Comment Failed", err)
 		response.ErrorResponse(ctx, response.ErrCodeComment, err.Error())
 		return
 	}

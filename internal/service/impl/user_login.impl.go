@@ -140,7 +140,6 @@ func (s *sUserLogin) Login(ctx context.Context, in *model.LoginInput) (codeResul
 	if err != nil {
 		return 3, out, nil
 	}
-	out.UserNickname = infoUser.UserNickname.String
 	// convert to json
 	infoUserJson, err := json.Marshal(infoUser)
 	if err != nil {

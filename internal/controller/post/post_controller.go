@@ -36,12 +36,11 @@ func (c *cPost) CreatePost(ctx *gin.Context) {
 	isPublishedStr := ctx.PostForm("is_published") // Bạn có thể xử lý giá trị này nếu cần
 	metadata := ctx.DefaultPostForm("metadata", "")
 
-	token := ctx.GetHeader("Authorization")
-	userInfo := auth.GetUserInfoFromToken(token)
+	userInfo := auth.GetUserInfoFromContext(ctx)
 
 	isPublished, err := strconv.ParseBool(isPublishedStr)
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": fmt.Sprintf("error convert isPhublished")})
+		ctx.JSON(400, gin.H{"error": fmt.Sprintf("error convert isPublished")})
 	} // Chuyển is_published từ string sang bool
 
 	// Nhận các file ảnh

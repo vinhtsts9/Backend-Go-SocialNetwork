@@ -7,6 +7,7 @@ import (
 	"go-ecommerce-backend-api/m/v2/package/setting"
 
 	"github.com/casbin/casbin/v2"
+	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -25,4 +26,5 @@ var (
 	KafkaConsumer *kafka.Consumer
 	Casbin        *casbin.Enforcer
 	Cloudinary    *cloudinary.CloudinaryService
+	Elastic       *elasticsearch.Client
 )

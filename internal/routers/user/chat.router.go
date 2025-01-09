@@ -16,6 +16,12 @@ func (c *ChatRouter) InitChatRouter(Router *gin.RouterGroup) {
 	{
 		chatRouterGroup.POST("/createRoom", chat.Chat.CreateRoom)
 		chatRouterGroup.GET("/get_history/:room_id", chat.Chat.GetChatHistory)
+		chatRouterGroup.GET("/get_user_nickname", chat.Chat.GetUserNickName)
 		chatRouterGroup.GET("/get_room_by_userId", chat.Chat.GetRoomByUserId)
+	}
+	chatRouterGroup.Use(middlewares.CasbinMiddleware())
+	{
+		chatRouterGroup.GET("/get_member/:room_id", chat.Chat.GetMemberGroup)
+		chatRouterGroup.DELETE("/delete_member/:room_id/:user_id", chat.Chat.DeleteMemberFromGroup)
 	}
 }

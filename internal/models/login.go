@@ -24,6 +24,10 @@ type UserBase struct {
 	UserLogoutTime sql.NullTime
 	UserState      uint8
 }
+type UserSearch struct {
+	UserNickname string `json:"user_nickname"`
+	UserAvatar   string `json:"user_avatar"`
+}
 
 // Các kiểu phụ trợ cho Null* (giống như trong database/sql)
 type NullString struct {
@@ -81,9 +85,15 @@ type LoginInput struct {
 	UserPassword string `json:"user_password"`
 }
 type LoginOutPut struct {
-	Token        string `json:"token"`
-	UserNickname string `json:"user_nickname"`
-	Message      string `json:"message"`
+	Token        string    `json:"token"`
+	UserNickname string    `json:"UserNickname"`
+	UserAvatar   string    `json:"UserAvatar"`
+	UserState    int       `json:"UserState"`
+	UserMobile   string    `json:"UserMobile"`
+	UserGender   int16     `json:"UserGender"`
+	UserBirthday time.Time `json:"UserBirthday"`
+	UserEmail    string    `json:"UserEmail"`
+	Message      string    `json:"message"`
 }
 type LogoutInput struct {
 	TokenString string `json:"token"`

@@ -2,6 +2,7 @@ package main
 
 import (
 	"go-ecommerce-backend-api/m/v2/internal/initialize"
+	elasticsearch "go-ecommerce-backend-api/m/v2/third_party/elasticSearch"
 	websocket "go-ecommerce-backend-api/m/v2/third_party/ws"
 	"log"
 	"net/http"
@@ -47,7 +48,7 @@ func main() {
 	r.GET("/ws", func(c *gin.Context) {
 		websocket.HandleConnections(c, cm)
 	})
-
+	r.GET("/search", elasticsearch.SearchUser)
 	log.Println("Starting server on :8080")
 
 	go func() {

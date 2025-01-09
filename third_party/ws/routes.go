@@ -9,7 +9,6 @@ import (
 	model "go-ecommerce-backend-api/m/v2/internal/models"
 	"go-ecommerce-backend-api/m/v2/internal/service/impl"
 	"go-ecommerce-backend-api/m/v2/package/utils/auth"
-	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -112,6 +111,8 @@ func (cm *ConnectionManager) BroadcastToRoom(roomID int, message []byte) {
 				cm.RemoveClient(client.Conn)
 			}
 		}
+	} else {
+		global.Logger.Sugar().Infof("No clients in room %d to send message", roomID) // Thêm log nếu không có client
 	}
 }
 
@@ -125,60 +126,56 @@ func (cm *ConnectionManager) checkAuth(client *Client) bool {
 
 // HandleConnections xử lý các kết nối WebSocket
 func HandleConnections(ctx *gin.Context, cm *ConnectionManager) {
-	log.Println(1)
 	conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
 	if err != nil {
 		fmt.Println("Lỗi khi nâng cấp:", err)
 		return
 	}
 	defer conn.Close()
-	log.Println(2)
 	defer func() {
 		cm.unregister <- conn
 	}()
 
 	client := &Client{Conn: conn}
 	cm.register <- client
-	log.Println(3)
-	// const (
-	// 	pongWait   = 60 * time.Second
-	// 	pingPeriod = (pongWait * 9) / 10
-	// )
 
-	// conn.SetReadDeadline(time.Now().Add(pongWait))
-	// conn.SetPongHandler(func(string) error {
-	// 	global.Logger.Sugar().Info("Pong received from client")
-	// 	conn.SetReadDeadline(time.Now().Add(pongWait))
-	// 	return nil
-	// })
+	const (
+		pongWait   = 60 * time.Second
+		pingPeriod = (pongWait * 9) / 10
+	)
 
-	// ticker := time.NewTicker(pingPeriod)
-	// defer ticker.Stop()
+	conn.SetReadDeadline(time.Now().Add(pongWait))
+	conn.SetPongHandler(func(string) error {
+		global.Logger.Sugar().Info("Pong received from client")
+		conn.SetReadDeadline(time.Now().Add(pongWait))
+		return nil
+	})
 
-	// go func() {
-	// 	for range ticker.C {
-	// 		if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-	// 			global.Logger.Sugar().Error("Failed to send Ping", err)
-	// 			conn.Close()
-	// 			return
-	// 		}
-	// 	}
-	// }()
+	ticker := time.NewTicker(pingPeriod)
+	defer ticker.Stop()
+
+	go func() {
+		for range ticker.C {
+			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				global.Logger.Sugar().Error("Failed to send Ping", err)
+				conn.Close()
+				return
+			}
+		}
+	}()
 
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				global.Logger.Sugar().Errorf("WebSocket connection closed unexpectedly")
+				global.Logger.Sugar().Warnf("Unexpected WebSocket closure: %v", err)
 			} else {
-				global.Logger.Sugar().Errorf("Error reading WebSocket message ")
+				global.Logger.Sugar().Infof("Normal WebSocket closure or error: %v", err)
 			}
+
 			cm.unregister <- conn
 			return
 		}
-		log.Println(4)
-
-		fmt.Println("Server received message:", string(message))
 
 		// Xử lý thông điệp theo logic
 		cm.handleMessage(message, client, ctx)
@@ -192,7 +189,6 @@ func (cm *ConnectionManager) handleMessage(message []byte, client *Client, ctx *
 		client.Conn.WriteMessage(websocket.TextMessage, []byte("Invalid message formated"))
 		return
 	}
-	global.Logger.Sugar().Info(msgData)
 	action := msgData["action"].(string)
 
 	switch action {
@@ -217,7 +213,6 @@ func (cm *ConnectionManager) handleMessage(message []byte, client *Client, ctx *
 		}
 		roomID := int(msgData["room_id"].(float64))
 		cm.AddClient(client, roomID)
-		client.Conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Joined room %d", roomID)))
 
 	case "leave":
 		if !cm.checkAuth(client) {
@@ -256,6 +251,7 @@ func (cm *ConnectionManager) handleMessage(message []byte, client *Client, ctx *
 			CreatedAt:      chatMessage.CreatedAt,
 		}
 		// Chuyển đổi thông điệp thành JSON
+		global.Logger.Sugar().Info(messageToSend)
 		jsonMessage, err := json.Marshal(messageToSend)
 		if err != nil {
 			client.Conn.WriteMessage(websocket.TextMessage, []byte("Error formatting message"))

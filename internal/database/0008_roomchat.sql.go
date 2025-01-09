@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 )
 
 const addMemberToRoomChat = `-- name: AddMemberToRoomChat :exec
@@ -59,6 +60,41 @@ type DeleteMemberFromRoomChatParams struct {
 func (q *Queries) DeleteMemberFromRoomChat(ctx context.Context, arg DeleteMemberFromRoomChatParams) error {
 	_, err := q.db.ExecContext(ctx, deleteMemberFromRoomChat, arg.UserID, arg.RoomID)
 	return err
+}
+
+const getMemberGroup = `-- name: GetMemberGroup :many
+select ui.user_nickname, ui.user_avatar
+from user_info ui
+join room_members rb on ui.user_id = rb.user_id
+where rb.room_id = ?
+`
+
+type GetMemberGroupRow struct {
+	UserNickname sql.NullString
+	UserAvatar   sql.NullString
+}
+
+func (q *Queries) GetMemberGroup(ctx context.Context, roomID int64) ([]GetMemberGroupRow, error) {
+	rows, err := q.db.QueryContext(ctx, getMemberGroup, roomID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetMemberGroupRow
+	for rows.Next() {
+		var i GetMemberGroupRow
+		if err := rows.Scan(&i.UserNickname, &i.UserAvatar); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getRoomByUserId = `-- name: GetRoomByUserId :many
