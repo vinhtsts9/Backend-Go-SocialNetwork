@@ -8,7 +8,9 @@ import (
 )
 
 func InitKafka() {
-	brokers := []string{"localhost:9092"}
+	stringBroker := global.Config.KafkaBroker.Brokers
+	global.Logger.Sugar().Info(stringBroker)
+	brokers := []string{stringBroker}
 	producer, err := kafka.GetProducer(brokers)
 	if err != nil {
 		log.Fatalf("Error initializing Kafka producer: %v", err)

@@ -25,6 +25,5 @@ func InitRedis() {
 		global.Logger.Error("Redis initialization Error", zap.Error(err))
 	}
 
-	fmt.Println("Init redis is running")
 	global.Rdb = rdb
 }

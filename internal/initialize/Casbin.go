@@ -8,8 +8,8 @@ import (
 )
 
 func InitCasbin() {
-	modelPath := "C:/Users/admin/Downloads/Go-Main/configs/model.conf"
-	policyPath := "C:/Users/admin/Downloads/Go-Main/configs/policy.csv"
+	modelPath := "configs/model.conf"
+	policyPath := "configs/policy.csv"
 
 	adapter := fileadapter.NewAdapter(policyPath)
 

@@ -6,12 +6,12 @@ COPY . .
 
 RUN go mod download
 
-RUN go -build -o crm.shopdev.com ./cmd/server
+RUN go build -o social.network.com ./cmd/server
 
-FROM scratch 
+FROM scratch
 
-COPY ./config /config
+COPY ./configs /configs
 
-COPY --from=builder /build/crm.shopdev.com /
+COPY --from=builder /build/social.network.com /
 
-ENTRYPOINT [ "/crm.shopdev.com", "config/local.yaml" ]
+ENTRYPOINT [ "/social.network.com", "configs/local.yaml" ]

@@ -8,3 +8,6 @@ Content-Type: application/json
     "verify_purpose": "TEST_USER",
     "verify_type": 1
 }
+
+
+GET http://localhost:8008/v1/2024/checkStatus

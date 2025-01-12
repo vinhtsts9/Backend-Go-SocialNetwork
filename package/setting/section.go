@@ -9,6 +9,8 @@ type Config struct {
 	// MySQLSlave   MySQLSetting  `mapstructure:"mysql_slave"`
 	// MySQLSlave2  MySQLSetting  `mapstructure:"mysql_slave2"`
 	// MySQLSlave3  MySQLSetting  `mapstructure:"mysql_slave3"`
+	KafkaBroker   Kafka         `mapstructure:"kafka"`
+	ElasticSearch ElasticSearch `mapstructure:"elasticsearch"`
 }
 type ServerSetting struct {
 	Port int    `mapstructure:"port"`
@@ -42,4 +44,11 @@ type JWTSetting struct {
 	TOKEN_HOUR_LIFESPAN uint   `mapstructure:"TOKEN_HOUR_LIFESPAN"`
 	API_SECRET_KEY      string `mapstructure:"API_SECRET_KEY"`
 	JWT_EXPIRATION      string `mapstructure:"JWT_EXPIRATION"`
+}
+type Kafka struct {
+	Brokers string `mapstructure:"brokers"`
+}
+type ElasticSearch struct {
+	Host string `mapstructure:"host"`
+	Port int    `mapstructure:"port"`
 }
