@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-Create table if not exists `pre_go_acc_user_two_factor_9999` (
+Create table if not exists user_two_factor (
     `two_factor_id` int unsigned auto_increment primary key,
     `user_id` int unsigned not null,
     `two_factor_auth_type` enum('SMS','EMAIL','APP') not null,
@@ -13,10 +13,10 @@ Create table if not exists `pre_go_acc_user_two_factor_9999` (
 
     index `idx_user_id` (`user_id`),
     index `idx_auth_type` (`two_factor_auth_type`)
-) ENGINE=InnoDb default charset=utf8mb4 comment='pre_go_acc_user_two_factor_9999';
+) ENGINE=InnoDb default charset=utf8mb4 comment='user_two_factor';
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
-drop table if exists `pre_go_acc_user_two_factor_9999`;
+drop table if exists user_two_factor;
 -- +goose StatementEnd

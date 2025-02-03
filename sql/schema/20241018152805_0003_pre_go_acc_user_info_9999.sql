@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS user_info (
-    user_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT'User ID',
+    user_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT'User ID' not null,
     user_account VARCHAR(255) NOT NULL,
     user_nickname VARCHAR(255),
     user_avatar VARCHAR(255),

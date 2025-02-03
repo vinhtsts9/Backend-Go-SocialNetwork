@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 create table messages (
     id int auto_increment primary key,
-    room_id int,
+    room_id BIGINT ,
     sender_id bigint unsigned,
     message_context text,
     message_type enum('text','image','video','file') not null default 'text',

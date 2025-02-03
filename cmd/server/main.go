@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"go-ecommerce-backend-api/m/v2/internal/initialize"
 	elasticsearch "go-ecommerce-backend-api/m/v2/third_party/elasticSearch"
 	websocket "go-ecommerce-backend-api/m/v2/third_party/ws"
@@ -11,7 +10,6 @@ import (
 	_ "go-ecommerce-backend-api/m/v2/cmd/swag/docs"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger" // swagger embed files
 )
@@ -36,12 +34,7 @@ import (
 // @name Authorization
 
 func main() {
-	// Gin for API
-	err := godotenv.Load("../../env")
-	if err != nil {
-		fmt.Printf("Error loading .env file,%s", err)
 
-	}
 	r := initialize.Run()
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	r.GET("/checkStatus", func(c *gin.Context) {

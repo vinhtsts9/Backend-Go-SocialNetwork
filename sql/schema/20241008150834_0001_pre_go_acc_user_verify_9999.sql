@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE  IF NOT EXISTS pre_go_acc_user_verify_9999 (
+CREATE TABLE  IF NOT EXISTS user_verify (
 	verify_id INT AUTO_INCREMENT PRIMARY KEY,
     verify_otp VARCHAR(6) NOT NULL,
     verify_key VARCHAR(255) NOT NULL,         -- verify_key: user email or phone number to identity the  otp recipient

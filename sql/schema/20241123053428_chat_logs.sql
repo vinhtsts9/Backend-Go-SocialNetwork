@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 CREATE TABLE chat_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,  -- ID duy nhất
-    room_id INT,  -- ID phòng chat
+    room_id bigint,  -- ID phòng chat
     user_id BIGINT UNSIGNED,  -- ID người dùng
     event_type ENUM('joined', 'left', 'role_changed', 'name_changed', 'avatar_changed') NOT NULL,  -- Loại sự kiện
     event_details TEXT,  -- Chi tiết sự kiện
