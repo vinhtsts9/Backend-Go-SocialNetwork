@@ -2,7 +2,7 @@ server:
   port: 8080
   mode: "dev"
 mysql_haproxy: 
-  host: mysql8-master
+  host: 127.0.0.1
   port: 8811
   username: root
   password: 123456
@@ -54,9 +54,9 @@ log:
   max_age: 28
   compress: true
 kafka:
-  brokers: demo_kafka:29092
+  brokers: 127.0.0.1:29092
 redis:
-  host: rdb
+  host: 127.0.0.1
   port: 6379
   password:
   database: 0
@@ -65,5 +65,5 @@ jwt:
   JWT_EXPIRATION: 1h
   API_SECRET: "xxx.yyy.zzz"
 elasticsearch:
-  host: elasticsearch
+  host: 127.0.0.1
   port: 9200

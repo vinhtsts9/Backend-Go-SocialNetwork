@@ -17,6 +17,15 @@ func LoadConfig() {
 	if err != nil {
 		panic(fmt.Errorf("failed to read config %w", err))
 	}
+	viper.AddConfigPath(".")   // Đặt đường dẫn tìm file .env
+	viper.SetConfigName("app") // Tên file .env (app.env)
+	viper.SetConfigType("env") // Định dạng .env
+
+	if err := viper.ReadInConfig(); err != nil {
+		fmt.Println("Error reading config from app.env:", err)
+	}
+
+	viper.AutomaticEnv()
 
 	fmt.Println("server port", viper.GetInt("server.port"))
 	fmt.Println("security port", viper.GetString("security.jwt.key"))
