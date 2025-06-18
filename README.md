@@ -1,2 +1,2 @@
 How to start:
-(in Go-Main) make dev
+(in Backend-Go-SocialNetwork) make dev
