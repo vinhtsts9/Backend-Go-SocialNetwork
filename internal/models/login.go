@@ -85,18 +85,12 @@ type LoginInput struct {
 	UserPassword string `json:"user_password"`
 }
 type LoginOutPut struct {
-	Token        string    `json:"token"`
-	UserNickname string    `json:"UserNickname"`
-	UserAvatar   string    `json:"UserAvatar"`
-	UserState    int       `json:"UserState"`
-	UserMobile   string    `json:"UserMobile"`
-	UserGender   int16     `json:"UserGender"`
-	UserBirthday time.Time `json:"UserBirthday"`
-	UserEmail    string    `json:"UserEmail"`
-	Message      string    `json:"message"`
+	Token        string `json:"token"`
+	RefreshToken string `json:"refresh_token"`
 }
 type LogoutInput struct {
-	TokenString string `json:"token"`
+	TokenString  string `json:"token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 // two factor authentication
@@ -122,6 +116,38 @@ type CreatePostInput struct {
 	Metadata     string      `json:"metadata"` // JSON metadata in string format
 }
 
+// Deadline implements context.Context.
+func (c *CreatePostInput) Deadline() (deadline time.Time, ok bool) {
+	panic("unimplemented")
+}
+
+// Done implements context.Context.
+func (c *CreatePostInput) Done() <-chan struct{} {
+	panic("unimplemented")
+}
+
+// Err implements context.Context.
+func (c *CreatePostInput) Err() error {
+	panic("unimplemented")
+}
+
+// Value implements context.Context.
+func (c *CreatePostInput) Value(key any) any {
+	panic("unimplemented")
+}
+
+type Post struct {
+	ID           uint32   `json:"id"`
+	UserId       uint64   `json:"user_id"`
+	UserNickname string   `json:"user_nickname"`
+	Title        string   `json:"title"`
+	ImagePaths   []string `json:"image_paths"`
+	CreatedAt    string   `json:"created_at"` // Format time string
+	UpdatedAt    string   `json:"updated_at"` // Format time string
+	IsPublished  bool     `json:"is_published"`
+	Metadata     string   `json:"metadata"`
+}
+
 // Model dùng để cập nhật Post
 type UpdatePostInput struct {
 	ID           uint32      `json:"id"`
@@ -134,17 +160,6 @@ type UpdatePostInput struct {
 }
 
 // Model Post trả về cho người dùng
-type Post struct {
-	ID           uint32      `json:"id"`
-	UserId       uint64      `json:"user_id"`
-	UserNickname string      `json:"user_nickname"`
-	Title        string      `json:"title"`
-	ImagePaths   interface{} `json:"image_paths"`
-	CreatedAt    string      `json:"created_at"` // Format time string
-	UpdatedAt    string      `json:"updated_at"` // Format time string
-	IsPublished  bool        `json:"is_published"`
-	Metadata     string      `json:"metadata"`
-}
 
 type CasbinPolicy struct {
 	PType string
@@ -153,4 +168,7 @@ type CasbinPolicy struct {
 	V2    string
 	V3    string
 	V4    string
+}
+type UpdateAvatar struct {
+	UserAvatar string `json:"user_avatar"`
 }

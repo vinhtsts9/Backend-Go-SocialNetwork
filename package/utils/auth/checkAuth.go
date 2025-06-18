@@ -1,8 +1,8 @@
 package auth
 
 import (
-	"context"
 	"encoding/json"
+	"fmt"
 	"go-ecommerce-backend-api/m/v2/global"
 	model "go-ecommerce-backend-api/m/v2/internal/models"
 
@@ -10,55 +10,63 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-func CheckAuth(token string) *jwt.StandardClaims {
+func CheckAuth(token string) error {
 	tokenString, ok := ExtractBearerToken(token)
 	if !ok {
-		return nil
+		return fmt.Errorf("don't extract bearer token")
+	}
+	_, err := VerifyTokenSubject(tokenString)
+	if err != nil {
+		return fmt.Errorf("Check auth failed", err)
+	}
+	return nil
+}
+func CheckAuthForWebsocket(token string) (*model.UserInfo, error) {
+	tokenString, ok := ExtractBearerToken(token)
+	if !ok {
+		return &model.UserInfo{}, fmt.Errorf("don't extract bearer token")
 	}
 	claims, err := VerifyTokenSubject(tokenString)
 	if err != nil {
-		return nil
-	}
-	return claims
-}
-
-func GetUserInfoFromToken(token string) model.UserInfo {
-
-	claims := CheckAuth(token)
-	if claims == nil {
-		return model.UserInfo{}
+		return &model.UserInfo{}, fmt.Errorf("Check auth failed", err)
 	}
 
-	Result, err := global.Rdb.Get(context.Background(), claims.Subject).Result()
-	if err != nil {
-		return model.UserInfo{}
-
+	subjectStr := claims.Subject
+	if subjectStr == "" {
+		global.Logger.Sugar().Error("Subject is empty in JWT claims")
+		return &model.UserInfo{}, err
 	}
+
 	var userInfo model.UserInfo
-	err = json.Unmarshal([]byte(Result), &userInfo)
+	err = json.Unmarshal([]byte(subjectStr), &userInfo)
 	if err != nil {
-		return model.UserInfo{}
+		global.Logger.Sugar().Errorf("JSON unmarshal error: %v", err)
+		return &model.UserInfo{}, err
 	}
 
-	return userInfo
+	return &userInfo, nil
 }
-func GetUserInfoFromContext(ctx *gin.Context) model.UserInfo {
-
-	Subject := ctx.Request.Context().Value("subjectUUID")
-	subjectStr, ok := Subject.(string)
+func GetUserInfoFromContext(ctx *gin.Context) *model.UserInfo {
+	claimsValue := ctx.Request.Context().Value("claims")
+	claims, ok := claimsValue.(*jwt.StandardClaims)
 	if !ok {
 		// Xử lý lỗi khi ép kiểu không thành công
-		global.Logger.Sugar().Error("Subject is not a string")
-		return model.UserInfo{}
+		global.Logger.Sugar().Error("Claims are not of type jwt.StandardClaims")
+		return &model.UserInfo{}
 	}
-	Result, err := global.Rdb.Get(ctx, subjectStr).Result()
-	if err != nil {
-		return model.UserInfo{}
+
+	subjectStr := claims.Subject
+	if subjectStr == "" {
+		global.Logger.Sugar().Error("Subject is empty in JWT claims")
+		return &model.UserInfo{}
 	}
+
 	var userInfo model.UserInfo
-	err = json.Unmarshal([]byte(Result), &userInfo)
+	err := json.Unmarshal([]byte(subjectStr), &userInfo)
 	if err != nil {
-		return model.UserInfo{}
+		global.Logger.Sugar().Errorf("JSON unmarshal error: %v", err)
+		return &model.UserInfo{}
 	}
-	return userInfo
+
+	return &userInfo
 }

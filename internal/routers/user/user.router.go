@@ -27,6 +27,7 @@ func (pr *UserRouter) InitUserRouter(Router *gin.RouterGroup) {
 	// userRouterPrivate.Use(Authen())
 	// userRouterPrivate.Use(Permission())
 	{
+		userRouterPrivate.POST("/avatar", account.Login.UpdateAvatar)
 		userRouterPrivate.GET("/get_info")
 		userRouterPrivate.POST("/two-factor/setup", account.TwoFA.SetupTwoFactorAuth)
 	}

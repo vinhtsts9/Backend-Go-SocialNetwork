@@ -7,10 +7,13 @@ import (
 	"go-ecommerce-backend-api/m/v2/internal/service"
 	"go-ecommerce-backend-api/m/v2/package/utils/auth"
 	"go-ecommerce-backend-api/m/v2/response"
+	"go-ecommerce-backend-api/m/v2/worker"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hibiken/asynq"
 	"go.uber.org/zap"
 )
 
@@ -31,60 +34,94 @@ type cPost struct{}
 // @Failure      500  {object}  response.ErrorResponseData
 // @Router       /post/create [post]
 func (c *cPost) CreatePost(ctx *gin.Context) {
-	userNicknameStr := ctx.PostForm("user_nickname") // Lấy user_id, nếu không có sẽ trả về "" mặc định
+	fmt.Println("DEBUG: CreatePost called")
+
+	// Phân tích form-data
+	err := ctx.Request.ParseMultipartForm(10 << 20) // Giới hạn 10MB
+	if err != nil {
+		fmt.Println("DEBUG: Multipart Form Parse Error:", err)
+		ctx.JSON(400, gin.H{"error": "Invalid form data"})
+		return
+	}
+	fmt.Println("DEBUG: Multipart Form Parsed Successfully")
+
+	userNicknameStr := ctx.PostForm("user_nickname")
 	title := ctx.DefaultPostForm("title", "")
-	isPublishedStr := ctx.PostForm("is_published") // Bạn có thể xử lý giá trị này nếu cần
+	isPublishedStr := ctx.PostForm("is_published")
 	metadata := ctx.DefaultPostForm("metadata", "")
 
 	userInfo := auth.GetUserInfoFromContext(ctx)
 
+	// Chuyển đổi is_published sang bool
 	isPublished, err := strconv.ParseBool(isPublishedStr)
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": fmt.Sprintf("error convert isPublished")})
-	} // Chuyển is_published từ string sang bool
+		fmt.Println("DEBUG: error convert isPublished", err)
+		ctx.JSON(400, gin.H{"error": fmt.Sprintf("error convert isPublished: %s", err.Error())})
+		return
+	}
 
 	// Nhận các file ảnh
 	files := ctx.Request.MultipartForm.File["image_paths"]
-	var imageUrls []string
+	fmt.Printf("DEBUG: number of files to upload: %d\n", len(files))
 
-	// Kiểm tra nếu có file ảnh
-	for _, file := range files {
+	var imageUrls []string
+	for i, file := range files {
+
+		fmt.Printf("DEBUG: Processing file %d: %s\n", i, file.Filename)
+
 		fileContent, err := file.Open()
 		if err != nil {
+			fmt.Println("DEBUG: Error opening file:", err)
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error opening file: %s", err.Error())})
 			return
 		}
 		defer fileContent.Close()
 
 		// Upload ảnh lên Cloudinary
-		uploadResp, err := global.Cloudinary.UploadImageToCloudinaryFromReader(fileContent)
+		uploadResp, err := global.Cloudinary.UploadImageToCloudinaryFromReader(fileContent, "uploads")
 		if err != nil {
+			fmt.Println("DEBUG: Cloudinary upload failed:", err)
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Cloudinary upload failed: %s", err.Error())})
 			return
 		}
 
+		fmt.Printf("DEBUG: Uploaded file %d URL: %s\n", i, uploadResp)
 		// Thêm URL của ảnh vào danh sách
 		imageUrls = append(imageUrls, uploadResp)
 	}
 
-	// Cập nhật thông tin bài viết
+	// In ra danh sách ảnh để kiểm tra
+	fmt.Println("DEBUG: imageUrls:", imageUrls)
+
+	// Tạo payload cho bài viết
 	post := model.CreatePostInput{
 		UserNickname: userNicknameStr,
 		Title:        title,
-		ImagePaths:   imageUrls, // Lưu các URL ảnh dưới dạng JSON
+		ImagePaths:   imageUrls,
 		IsPublished:  isPublished,
 		Metadata:     metadata,
 		UserId:       uint64(userInfo.UserID),
 	}
+	fmt.Println("DEBUG: post payload:", post)
 
-	codeRs, dataRs, err := service.NewPost().CreatePost(ctx, &post)
+	// Gọi phương thức DistributeTaskPost
+	opts := []asynq.Option{
+		asynq.MaxRetry(10),
+		asynq.ProcessIn(10 * time.Second),
+		asynq.Queue(worker.QueueCritical),
+	}
+	distributor := worker.NewRedisTaskDistributor(global.RedisOpt)
+
+	dataRs, err := distributor.DistributeTaskPost(ctx.Request.Context(), &post, opts...)
 	if err != nil {
-		global.Logger.Error("Error creating post", zap.Error(err))
-		response.ErrorResponse(ctx, response.ErrCodeInternal, err.Error())
+		fmt.Println("DEBUG: DistributeTaskPost failed:", err)
+		ctx.JSON(500, gin.H{"error": fmt.Sprintf("Distribute post failed: %s", err.Error())})
 		return
 	}
+	fmt.Println("DEBUG: DistributeTaskPost success:", dataRs)
 
-	response.SuccessResponse(ctx, codeRs, dataRs)
+	// Trả về kết quả thành công
+	response.SuccessResponse(ctx, 200, dataRs)
 }
 
 // UpdatePost

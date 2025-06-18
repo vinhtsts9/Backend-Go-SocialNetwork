@@ -97,19 +97,9 @@ func (s *sUserLogin) VerifyTwoFactorAuth(ctx context.Context, in *model.TwoFacto
 	return response.ErrCodeSuccess, nil
 }
 func (s *sUserLogin) Logout(ctx context.Context, in *model.LogoutInput) (codeRs int, err error) {
-	claims := auth.CheckAuth(in.TokenString)
+	err = auth.RevokeRefreshToken(in.RefreshToken)
 	if err != nil {
-		return 1, fmt.Errorf("invalid token: %v", err)
-	}
-	err = global.Rdb.Del(ctx, claims.Subject).Err()
-	if err != nil {
-		return 2, fmt.Errorf("Failed to delete session from Redis: %v", err)
-
-	}
-	userAccount := auth.GetUserInfoFromToken(in.TokenString)
-	err = s.r.LogoutUserBase(ctx, userAccount.UserAccount)
-	if err != nil {
-		return response.ErrCodeNotFound, err
+		return response.ErrCodeNotFound, fmt.Errorf("failed to revoke refresh token: %v", err)
 	}
 
 	return response.ErrCodeSuccess, nil
@@ -128,12 +118,12 @@ func (s *sUserLogin) Login(ctx context.Context, in *model.LoginInput) (codeResul
 	// 3. Check two factor authentication
 
 	// 4. Update password time
-	go s.r.LoginUserBase(ctx, database.LoginUserBaseParams{
+	err = s.r.LoginUserBase(ctx, database.LoginUserBaseParams{
 		UserLoginIp: sql.NullString{String: "127.0.0.1", Valid: true},
 		UserAccount: in.UserAccount,
 	})
 	// 5. Create uuid User
-	subToken := utils.GenerateCliTokenUUID(int(userBase.UserID))
+	// subToken := utils.GenerateCliTokenUUID(int(userBase.UserID))
 
 	// 6. get user_info table
 	infoUser, err := s.r.GetUser(ctx, uint64(userBase.UserID))
@@ -145,13 +135,13 @@ func (s *sUserLogin) Login(ctx context.Context, in *model.LoginInput) (codeResul
 	if err != nil {
 		return 4, out, fmt.Errorf("convert to json failed: %v", err)
 	}
-	// 7. give infoUserJson to redis with key = subToken
-	err = global.Rdb.Set(ctx, subToken, infoUserJson, time.Duration(consts.TIME_OTP_REGISTER)*time.Hour).Err()
-	if err != nil {
-		return 5, out, err
-	}
-	// 8. create token
-	out.Token, err = auth.CreateToken(subToken)
+	// // // 7. give infoUserJson to redis with key = subToken
+	// // err = global.Rdb.Set(ctx, subToken, infoUserJson, time.Duration(consts.TIME_OTP_REGISTER)*time.Hour).Err()
+	// // if err != nil {
+	// // 	return 5, out, err
+	// // }
+	// // 8. create token
+	out.Token, out.RefreshToken, err = auth.GenerateTokens(string(infoUserJson))
 	if err != nil {
 		return 6, out, err
 	}

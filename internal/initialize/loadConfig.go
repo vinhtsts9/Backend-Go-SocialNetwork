@@ -8,29 +8,38 @@ import (
 )
 
 func LoadConfig() {
-	viper := viper.New()
-	viper.AddConfigPath("./configs")
-	viper.SetConfigName("local")
-	viper.SetConfigType("yaml")
+	// Load local.yaml
+	yamlViper := viper.New()
+	yamlViper.AddConfigPath("./configs")
+	yamlViper.SetConfigName("local")
+	yamlViper.SetConfigType("yaml")
 
-	err := viper.ReadInConfig()
+	err := yamlViper.ReadInConfig()
 	if err != nil {
 		panic(fmt.Errorf("failed to read config %w", err))
 	}
-	viper.AddConfigPath(".")   // Đặt đường dẫn tìm file .env
-	viper.SetConfigName("app") // Tên file .env (app.env)
-	viper.SetConfigType("env") // Định dạng .env
 
-	if err := viper.ReadInConfig(); err != nil {
+	// Load app.env
+	envViper := viper.New()
+	envViper.AddConfigPath(".")
+	envViper.SetConfigName("app")
+	envViper.SetConfigType("env")
+
+	if err := envViper.ReadInConfig(); err != nil {
 		fmt.Println("Error reading config from app.env:", err)
 	}
 
-	viper.AutomaticEnv()
+	// Gộp biến môi trường từ .env vào
+	envViper.AutomaticEnv()
 
-	fmt.Println("server port", viper.GetInt("server.port"))
-	fmt.Println("security port", viper.GetString("security.jwt.key"))
+	fmt.Println("server port", yamlViper.GetInt("server.port"))
+	fmt.Println("security jwt key", envViper.GetString("CLOUD_NAME"))
 
-	if err := viper.Unmarshal(&global.Config); err != nil {
+	// Kết hợp cả YAML và ENV vào global.Config
+	if err := yamlViper.Unmarshal(&global.Config); err != nil {
+		fmt.Printf("unable to decode configuration %v", err)
+	}
+	if err := envViper.Unmarshal(&global.CloudinarySetting); err != nil {
 		fmt.Printf("unable to decode configuration %v", err)
 	}
 }

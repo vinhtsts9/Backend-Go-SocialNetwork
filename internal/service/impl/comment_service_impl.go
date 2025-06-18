@@ -2,7 +2,6 @@ package impl
 
 import (
 	"context"
-	"database/sql"
 	"go-ecommerce-backend-api/m/v2/global"
 	"go-ecommerce-backend-api/m/v2/internal/database"
 	model "go-ecommerce-backend-api/m/v2/internal/models"
@@ -22,119 +21,28 @@ func NewCommenService(r *database.Queries) *sComment {
 		r: r,
 	}
 }
-
 func (s *sComment) CreateComment(ctx *gin.Context, Comment *model.CreateCommentInput, userId uint64) (codeRs int, RS model.ListCommentOutput, err error) {
-
 	reqCtx, cancel := context.WithTimeout(ctx.Request.Context(), 5*time.Second)
 	defer cancel()
-	var rightValue int32
-	global.Logger.Sugar().Info(Comment)
-	parent, err := s.r.GetCommentByID(reqCtx, Comment.CommentParentId)
-	if err != nil {
-		global.Logger.Sugar().Info(0)
-		rightValue = 0
-	} else {
-		rightValue = parent.CommentRight
-		global.Logger.Sugar().Info(1)
-	}
-	if rightValue > 0 {
 
-		// Sử dụng WaitGroup để chờ đợi các goroutine hoàn thành
-		var wg sync.WaitGroup
-		wg.Add(3)
-		go func() {
-			defer wg.Done()
-			if err := s.r.AddReplyCommentParent(ctx, Comment.CommentParentId); err != nil {
-				global.Logger.Sugar().Error("update reply for parent failed")
-			}
-		}()
-		go func() {
-			defer wg.Done() // Đảm bảo goroutine này hoàn thành khi hết việc
-			params := database.UpdateCommentRightCreateParams{
-				PostID:       Comment.PostId,
-				CommentRight: rightValue,
-			}
-			if err := s.r.UpdateCommentRightCreate(reqCtx, params); err != nil {
-				global.Logger.Sugar().Error("update cmRight failed")
-			}
-		}()
-
-		go func() {
-			defer wg.Done()
-			params := database.UpdateCommentLeftCreateParams{
-				PostID:      Comment.PostId,
-				CommentLeft: rightValue,
-			}
-			if err := s.r.UpdateCommentLeftCreate(reqCtx, params); err != nil {
-				global.Logger.Sugar().Error("update cmLeft failed")
-			}
-		}()
-
-		// Chờ đợi các goroutines hoàn thành
-		wg.Wait()
-
-	} else {
-		MaxRightValue, err := s.r.GetMaxRightComment(reqCtx, Comment.PostId)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				rightValue = 1
-			} else {
-				return 1, model.ListCommentOutput{}, err
-			}
-		} else {
-			rightValue = MaxRightValue + 1
-		}
-
-	}
-	global.Logger.Sugar().Info(2)
-
-	// Sử dụng goroutine cho CreateComment nhưng đợi kết quả hoàn thành (thông qua WaitGroup)
-
-	dbs := database.CreateCommentParams{
-		PostID:         Comment.PostId,
-		UserID:         userId,
-		UserNickname:   Comment.UserNickname,
-		CommentContent: Comment.CommentContent,
-		CommentLeft:    rightValue,
-		CommentRight:   rightValue + 1,
-		CommentParent: sql.NullInt32{
-			Int32: Comment.CommentParentId,
-			Valid: Comment.CommentParentId != 0,
-		},
-		Isdeleted: sql.NullBool{
-			Bool:  false,
-			Valid: true,
+	params := database.CreateCommentTxParams{
+		Input:  Comment,
+		UserID: userId,
+		AfterCreated: func(comment model.ListCommentOutput) error {
+			// Ví dụ log sau khi tạo comment thành công
+			global.Logger.Sugar().Infof("Comment created with ID: %d, Content: %s", comment.Id, comment.CommentContent)
+			// Có thể gọi các service khác, cập nhật cache, gửi notification...
+			return nil
 		},
 	}
-	result, err := s.r.CreateComment(reqCtx, dbs)
+
+	result, err := global.Store.CreateCommentTx(reqCtx, params)
 	if err != nil {
-		global.Logger.Sugar().Error("Create comment failed", err)
+		global.Logger.Sugar().Error("CreateCommentTx failed", err)
+		return response.ErrCodeComment, model.ListCommentOutput{}, err
 	}
 
-	// Lấy ID của bản ghi vừa được chèn và kiểm tra lỗi
-	lastInsertId, err := result.LastInsertId()
-	if err != nil {
-		global.Logger.Sugar().Error("Failed to get last insert ID", err)
-		return
-	}
-
-	// Gọi hàm GetCommentByLastInsertId với ID vừa lấy được
-	CommentRs, err := s.r.GetCommentByLastInsertId(reqCtx, int32(lastInsertId))
-	if err != nil {
-		global.Logger.Sugar().Error("Get comment by last insert ID failed", err)
-		return
-	}
-	Rs := model.ListCommentOutput{
-		Id:              CommentRs.ID,
-		PostId:          CommentRs.PostID,
-		UserNickname:    CommentRs.UserNickname,
-		CommentContent:  CommentRs.CommentContent,
-		CommentParentId: CommentRs.CommentParent.Int32,
-		Isdeleted:       CommentRs.Isdeleted.Bool,
-		CreatedAt:       CommentRs.CreatedAt.Time.Format(time.RFC3339),
-	}
-
-	return response.ErrCodeSuccess, Rs, nil
+	return response.ErrCodeSuccess, result.Comment, nil
 }
 
 func (s *sComment) ListComments(modelInput *model.ListCommentInput) (codeRs int, out []model.ListCommentOutput, err error) {

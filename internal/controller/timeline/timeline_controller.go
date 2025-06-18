@@ -15,15 +15,12 @@ type cTimeline struct {
 var Timeline = new(cTimeline)
 
 func (c *cTimeline) GetAllPost(ctx *gin.Context) {
-	token := ctx.GetHeader("Authorization")
-	userInfo := auth.GetUserInfoFromToken(token)
-	global.Logger.Sugar().Info(userInfo.UserID)
+	userInfo := auth.GetUserInfoFromContext(ctx)
 	codeRs, data, err := service.NewTimelineInterface().GetAllPosts(ctx, int64(userInfo.UserID))
 	if err != nil {
 		global.Logger.Sugar().Error("get post error ", err)
 		response.ErrorResponse(ctx, response.ErrCodePostFailed, "get posts failed")
 	}
-	global.Logger.Sugar().Info("Time of post", data)
 	response.SuccessResponse(ctx, codeRs, data)
 }
 

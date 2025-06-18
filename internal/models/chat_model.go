@@ -28,6 +28,6 @@ type ModelChat struct {
 	MessageContext sql.NullString      `json:"message_context"`
 	MessageType    MessagesMessageType `json:"message_type"`
 	IsPinned       sql.NullBool        `json:"is_pinned"`
-	RoomId         sql.NullInt32       `json:"room_id"`
+	RoomId         sql.NullInt64       `json:"room_id"`
 	CreatedAt      sql.NullTime        `json:"created_at"`
 }

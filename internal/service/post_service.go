@@ -7,7 +7,7 @@ import (
 
 type (
 	IPost interface {
-		CreatePost(ctx context.Context, input *model.CreatePostInput) (codeResult int, post model.Post, err error)
+		//CreatePost(ctx context.Context, input *model.CreatePostInput) (codeResult int, post model.Post, err error)
 		UpdatePost(ctx context.Context, postId string, input *model.UpdatePostInput) (codeResult int, post model.Post, err error)
 		DeletePost(ctx context.Context, postId string) (codeResult int, err error)
 	}

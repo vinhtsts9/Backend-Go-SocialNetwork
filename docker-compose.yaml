@@ -97,8 +97,8 @@ services:
     depends_on:
      - kafka
     volumes:
-     - /opt/kafka/plugins:/kafka/connect/plugins
-     - /mysql/connectKafka:/kafka/connect/mysql
+     - /opt/kafka/plugins:/kafka/connect/plugins #chứa connector của elasticsearch
+     - /mysql/connectKafka:/kafka/connect/mysql #chứa connector của mysql
 
     environment:
      - CONNECT_PLUGIN_PATH=/kafka/connect/plugins,/kafka/connect/mysql

@@ -2,7 +2,7 @@
 SELECT user_nickname, message_context, message_type, is_pinned, created_at 
 FROM messages
 WHERE room_id = ? 
-ORDER BY created_at DESC
+ORDER BY created_at ASC
 LIMIT 10;
 
 

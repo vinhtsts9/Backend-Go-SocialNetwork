@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"go-ecommerce-backend-api/m/v2/global"
+	"fmt"
 	"go-ecommerce-backend-api/m/v2/internal/database"
 	model "go-ecommerce-backend-api/m/v2/internal/models"
+	"go-ecommerce-backend-api/m/v2/package/utils"
 	"go-ecommerce-backend-api/m/v2/response"
 	"strconv"
-	"time"
 )
 
 type sPost struct {
@@ -22,48 +22,48 @@ func NewPostImpl(r *database.Queries) *sPost {
 	}
 }
 
-// CreatePost tạo một bài viết mới
-func (s *sPost) CreatePost(ctx context.Context, input *model.CreatePostInput) (codeRs int, data model.Post, err error) {
-	// Log đầu vào
-	global.Logger.Sugar().Info("Model create Post, %s", input)
+// // CreatePost tạo một bài viết mới
+// func (s *sPost) CreatePost(ctx context.Context, input *model.CreatePostInput) (codeRs int, data model.Post, err error) {
+// 	// Log đầu vào
+// 	global.Logger.Sugar().Info("Model create Post, %s", input)
 
-	// Serialize image_paths để lưu vào database
-	contentJSON, err := json.Marshal(input.ImagePaths)
-	if err != nil {
-		return response.ErrCodePostFailed, model.Post{}, errors.New("failed to serialize image paths")
-	}
+// 	// Serialize image_paths để lưu vào database
+// 	contentJSON, err := json.Marshal(input.ImagePaths)
+// 	if err != nil {
+// 		return response.ErrCodePostFailed, model.Post{}, errors.New("failed to serialize image paths")
+// 	}
 
-	// Tạo đối tượng CreatePostParams để lưu vào DB
-	createPostParams := database.CreatePostParams{
-		Title:        input.Title,
-		ImagePaths:   contentJSON,
-		UserNickname: input.UserNickname,
-		UserID:       input.UserId,
-	}
+// 	// Tạo đối tượng CreatePostParams để lưu vào DB
+// 	createPostParams := database.CreatePostParams{
+// 		Title:        input.Title,
+// 		ImagePaths:   contentJSON,
+// 		UserNickname: input.UserNickname,
+// 		UserID:       input.UserId,
+// 	}
 
-	// Lưu vào database
-	err = s.r.CreatePost(ctx, createPostParams)
-	if err != nil {
-		return response.ErrCodePostFailed, model.Post{}, errors.New("failed to create post in database")
-	}
+// 	// Lưu vào database
+// 	err = s.r.CreatePost(ctx, createPostParams)
+// 	if err != nil {
+// 		return response.ErrCodePostFailed, model.Post{}, errors.New("failed to create post in database")
+// 	}
 
-	// Tạo đối tượng post để trả về
-	post := model.Post{
-		Title:        input.Title,
-		ImagePaths:   input.ImagePaths, // Đây là danh sách file paths
-		UserNickname: input.UserNickname,
-		CreatedAt:    time.Now().Format(time.RFC3339),
-		UpdatedAt:    time.Now().Format(time.RFC3339),
-	}
+// 	// Tạo đối tượng post để trả về
+// 	post := model.Post{
+// 		Title:        input.Title,
+// 		ImagePaths:   input.ImagePaths, // Đây là danh sách file paths
+// 		UserNickname: input.UserNickname,
+// 		CreatedAt:    time.Now().Format(time.RFC3339),
+// 		UpdatedAt:    time.Now().Format(time.RFC3339),
+// 	}
 
-	// Gửi message vào Kafka (nếu cần)
-	err = global.KafkaProducer.Send("create-post", post, 3)
-	if err != nil {
-		return response.ErrCodePostFailed, model.Post{}, errors.New("failed to send post data to Kafka")
-	}
+// 	// Gửi message vào Kafka (nếu cần)
+// 	err = global.KafkaProducer.Send("create-post", post, 3)
+// 	if err != nil {
+// 		return response.ErrCodePostFailed, model.Post{}, errors.New("failed to send post data to Kafka")
+// 	}
 
-	return response.ErrCodeSuccess, post, nil
-}
+// 	return response.ErrCodeSuccess, post, nil
+// }
 
 // UpdatePost cập nhật thông tin bài viết
 func (s *sPost) UpdatePost(ctx context.Context, postId string, input *model.UpdatePostInput) (codeRs int, data model.Post, err error) {
@@ -85,18 +85,17 @@ func (s *sPost) UpdatePost(ctx context.Context, postId string, input *model.Upda
 	}
 
 	// Gọi hàm cập nhật bài viết từ repository
-	err = s.r.UpdatePost(ctx, updatePostParams)
+	result, err := s.r.UpdatePost(ctx, updatePostParams)
 	if err != nil {
 		return response.ErrCodePostFailed, model.Post{}, err
 	}
+	lastId, err := result.LastInsertId()
 
+	row, err := s.r.GetPostById(ctx, uint64(lastId))
 	// Trả về bài viết đã được cập nhật
-	post := model.Post{
-		Title:        input.Title,
-		ImagePaths:   input.ImagePaths,
-		UserNickname: input.UserNickname,    // Assuming UserID stays the same
-		CreatedAt:    time.Now().GoString(), // Assuming created_at doesn't change on update
-		UpdatedAt:    time.Now().GoString(),
+	post, err := utils.MapGetPostByIdRowToPost(row)
+	if err != nil {
+		return response.ErrCodePostFailed, model.Post{}, fmt.Errorf("failed to map DB row to Post model: %v", err)
 	}
 	return response.ErrCodeSuccess, post, nil
 }

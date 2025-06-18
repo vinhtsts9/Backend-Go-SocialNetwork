@@ -1,11 +1,13 @@
 package impl
 
 import (
+	"database/sql"
 	"fmt"
 	"go-ecommerce-backend-api/m/v2/internal/database"
 	model "go-ecommerce-backend-api/m/v2/internal/models"
+	"go-ecommerce-backend-api/m/v2/package/utils"
 	"go-ecommerce-backend-api/m/v2/response"
-	"time"
+	"log"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,38 +24,38 @@ func NewTimelineImpl(r *database.Queries) *sTimeline {
 }
 
 // GetAllPosts lấy danh sách tất cả bài viết
-func (s *sTimeline) GetAllPosts(ctx *gin.Context, userId int64) (codeRs int, data []model.Post, err error) {
-	// // Kiểm tra cache trước khi truy vấn database
+func (s *sTimeline) GetAllPosts(ctx *gin.Context, userId int64) (int, []model.Post, error) {
 	cacheKey := fmt.Sprintf("timeline:%d", userId)
-	// cachedPosts := getCache(cacheKey)
-	// if err == nil && cachedPosts != nil {
-	// 	return response.ErrCodeSuccess, cachedPosts, nil
-	// }
 
-	// Nếu không có trong cache, truy vấn từ cơ sở dữ liệu
-	rows, err := s.r.GetAllpost(ctx)
+	// 1. Kiểm tra cache trước
+	if cachedPosts := getCache(cacheKey); cachedPosts != nil {
+		fmt.Println("cached post found for key:", cacheKey)
+		return response.ErrCodeSuccess, cachedPosts, nil
+	}
+
+	// 2. Nếu không có cache, truy vấn DB
+	log.Println("Cache miss, querying database for userId:", userId)
+	rows, err := s.r.GetAllpost(ctx, sql.NullInt64{Int64: userId, Valid: userId > 0})
 	if err != nil {
-		return response.ErrCodePostFailed, nil, fmt.Errorf("failed to get posts from DB: %v", err)
+		return response.ErrCodePostFailed, nil, fmt.Errorf("failed to get posts from DB: %w", err)
 	}
 
-	var posts []model.Post
+	// 3. Chuyển dữ liệu DB sang model
+	posts := make([]model.Post, 0, len(rows))
 	for _, row := range rows {
-		posts = append(posts, model.Post{
-			ID:           uint32(row.ID),
-			UserNickname: row.UserNickname,
-			Title:        row.Title,
-			ImagePaths:   &row.ImagePaths,
-			CreatedAt:    row.CreatedAt.Time.Format(time.RFC3339),
-			UpdatedAt:    row.UpdatedAt.Time.Format(time.RFC3339),
-		})
+		post, err := utils.MapGetAllpostRowToPost(row)
+		if err != nil {
+			return response.ErrCodePostFailed, nil, fmt.Errorf("failed to map DB row to Post model: %w", err)
+		}
+		posts = append(posts, post)
 	}
 
-	// Lưu bài viết vào cache để sử dụng lần sau
-	setCache(cacheKey, posts)
+	// 4. Lưu cache
+	setCache(cacheKey, &posts)
+
 	return response.ErrCodeSuccess, posts, nil
 }
 
-// GetPostById lấy bài viết theo ID
 func (s *sTimeline) GetPostById(ctx *gin.Context, postId string) (codeRs int, data model.Post, err error) {
 	id, err := parsePostId(postId)
 	if err != nil {
@@ -67,23 +69,20 @@ func (s *sTimeline) GetPostById(ctx *gin.Context, postId string) (codeRs int, da
 		return response.ErrCodeSuccess, cachedPost[0], nil
 	}
 
-	// Nếu không có trong cache, truy vấn từ cơ sở dữ liệu
+	// Truy vấn DB lấy row
 	row, err := s.r.GetPostById(ctx, id)
 	if err != nil {
 		return response.ErrCodePostFailed, model.Post{}, fmt.Errorf("failed to get post from DB: %v", err)
 	}
 
-	post := model.Post{
-		ID:           uint32(row.ID),
-		UserNickname: row.UserNickname,
-		Title:        row.Title,
-		ImagePaths:   &row.ImagePaths,
-		CreatedAt:    row.CreatedAt.Time.Format(time.RFC3339),
-		UpdatedAt:    row.UpdatedAt.Time.Format(time.RFC3339),
+	// Dùng hàm map để chuyển đổi sang model.Post
+	post, err := utils.MapGetPostByIdRowToPost(row)
+	if err != nil {
+		return response.ErrCodePostFailed, model.Post{}, fmt.Errorf("failed to map DB row to Post model: %v", err)
 	}
 
-	// Lưu bài viết vào cache để sử dụng lần sau
-	setCache(cacheKey, []model.Post{post})
+	// Lưu vào cache
+	setCache(cacheKey, &[]model.Post{post})
 
 	return response.ErrCodeSuccess, post, nil
 }

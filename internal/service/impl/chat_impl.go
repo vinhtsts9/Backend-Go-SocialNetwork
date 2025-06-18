@@ -58,7 +58,7 @@ func (s *sChat) GetRoomChatByUserId(ctx *gin.Context, userId uint64) (codeRs int
 }
 func (s *sChat) GetChatHistory(ctx *gin.Context, roomId int) (codeRs int, err error, rs []model.ModelChat) {
 
-	rows, err := s.r.GetChatHistory(ctx, sql.NullInt32{Int32: int32(roomId), Valid: true})
+	rows, err := s.r.GetChatHistory(ctx, sql.NullInt64{Int64: int64(roomId), Valid: true})
 	if err != nil {
 		return response.ErrCodeGetMessage, err, nil
 	}
@@ -95,7 +95,7 @@ func (s *sChat) SetChatHistory(ctx *gin.Context, model *model.ModelChat) {
 
 func (s *sChat) GetUserNickName(ctx *gin.Context) (codeRs int, rs string, err error) {
 	userInfo := auth.GetUserInfoFromContext(ctx)
-	if userInfo == (model.UserInfo{}) {
+	if userInfo == (&model.UserInfo{}) {
 		return response.ErrCodeGetMessage, "", err
 	}
 	return response.ErrCodeSuccess, userInfo.UserNickname.String, nil

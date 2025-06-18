@@ -1,10 +1,15 @@
 package account
 
 import (
+	"database/sql"
+	"fmt"
 	"go-ecommerce-backend-api/m/v2/global"
+	"go-ecommerce-backend-api/m/v2/internal/database"
 	model "go-ecommerce-backend-api/m/v2/internal/models"
 	"go-ecommerce-backend-api/m/v2/internal/service"
+	"go-ecommerce-backend-api/m/v2/package/utils/auth"
 	"go-ecommerce-backend-api/m/v2/response"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -36,6 +41,47 @@ func (c *cUserLogin) UpdatePasswordRegister(ctx *gin.Context) {
 	if err != nil {
 		response.ErrorResponse(ctx, response.ErrCodeParamInvalid, err.Error())
 		return
+	}
+	response.SuccessResponse(ctx, response.ErrCodeSuccess, result)
+}
+
+func (c *cUserLogin) UpdateAvatar(ctx *gin.Context) {
+	err := ctx.Request.ParseMultipartForm(10 << 20) // Giới hạn 10MB
+	if err != nil {
+		fmt.Println("DEBUG: Multipart Form Parse Error:", err)
+		ctx.JSON(400, gin.H{"error": "Invalid form data"})
+		return
+	}
+	fmt.Println("DEBUG: Multipart Form Parsed Successfully")
+
+	userInfo := auth.GetUserInfoFromContext(ctx)
+
+	file, _, err := ctx.Request.FormFile("avatar")
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Không tìm thấy file"})
+		return
+	}
+	defer file.Close()
+
+	uploadResp, err := global.Cloudinary.UploadImageToCloudinaryFromReader(file, "avatar")
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Upload thất bại"})
+		return
+	}
+	params := database.UpdateAvatarParams{
+		UserAvatar: sql.NullString{
+			String: uploadResp,
+			Valid:  true,
+		},
+		UserID: uint64(userInfo.UserID),
+	}
+	_, err = global.Store.UpdateAvatar(ctx, params)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Không cập nhật được database"})
+		return
+	}
+	result := model.UpdateAvatar{
+		UserAvatar: uploadResp,
 	}
 	response.SuccessResponse(ctx, response.ErrCodeSuccess, result)
 }

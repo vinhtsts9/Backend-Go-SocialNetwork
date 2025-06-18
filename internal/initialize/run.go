@@ -18,7 +18,7 @@ func Run() *gin.Engine {
 	InitKafka()
 	NewCloudinary()
 	InitElasticSearch()
-
+	InitStore()
 	r := InitRouter()
 	return r
 }

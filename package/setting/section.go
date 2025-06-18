@@ -12,6 +12,11 @@ type Config struct {
 	KafkaBroker   Kafka         `mapstructure:"kafka"`
 	ElasticSearch ElasticSearch `mapstructure:"elasticsearch"`
 }
+type Cloudinary struct {
+	CloudName string `mapstructure:"CLOUD_NAME"`
+	ApiKey    string `mapstructure:"API_KEY"`
+	ApiSecret string `mapstructure:"API_SECRET"`
+}
 type ServerSetting struct {
 	Port int    `mapstructure:"port"`
 	Mode string `mapstructure:"mode"`
@@ -44,6 +49,7 @@ type JWTSetting struct {
 	TOKEN_HOUR_LIFESPAN uint   `mapstructure:"TOKEN_HOUR_LIFESPAN"`
 	API_SECRET_KEY      string `mapstructure:"API_SECRET_KEY"`
 	JWT_EXPIRATION      string `mapstructure:"JWT_EXPIRATION"`
+	REFRESH_EXPIRATION  string `mapstructure:"REFRESH_EXPIRATION"`
 }
 type Kafka struct {
 	Brokers string `mapstructure:"brokers"`

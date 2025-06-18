@@ -16,5 +16,5 @@ CREATE TABLE chat_rooms (
 
 -- +goose Down
 -- +goose StatementBegin
-drop table if exists room_chats;
+drop table if exists chat_rooms;
 -- +goose StatementEnd

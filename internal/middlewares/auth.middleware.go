@@ -26,8 +26,7 @@ func AuthenMiddleware() gin.HandlerFunc {
 			return
 		}
 		// update claims to context
-		log.Println("claims:: UUID::", claims.Subject)
-		ctx := context.WithValue(c.Request.Context(), "subjectUUID", claims.Subject)
+		ctx := context.WithValue(c.Request.Context(), "claims", claims)
 		c.Request = c.Request.WithContext(ctx)
 		c.Next()
 	}

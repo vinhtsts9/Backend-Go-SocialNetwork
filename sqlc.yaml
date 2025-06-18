@@ -6,4 +6,6 @@ sql:
     gen:
       go:
         package: "database"
+        emit_interface: true
         out: "internal/database"
+        

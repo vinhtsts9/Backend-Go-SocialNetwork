@@ -47,7 +47,7 @@ func (c *CloudinaryService) UploadImageFromURLToCloudinary(imageUrl string) (str
 }
 
 // Hàm upload ảnh từ file
-func (c *CloudinaryService) UploadImageToCloudinaryFromReader(file io.Reader) (string, error) {
+func (c *CloudinaryService) UploadImageToCloudinaryFromReader(file io.Reader, folder string) (string, error) {
 	// Kiểm tra xem Cloudinary đã được khởi tạo hay chưa
 	if c.cld == nil {
 		return "", fmt.Errorf("cloudinary not initialized")
@@ -55,10 +55,10 @@ func (c *CloudinaryService) UploadImageToCloudinaryFromReader(file io.Reader) (s
 
 	// Upload file từ io.Reader lên Cloudinary
 	resp, err := c.cld.Upload.Upload(context.Background(), file, uploader.UploadParams{
-		Folder: "uploads", // Chọn thư mục lưu trữ trên Cloudinary (tùy chỉnh theo yêu cầu)
+		Folder: folder, // Chọn thư mục lưu trữ trên Cloudinary (tùy chỉnh theo yêu cầu)
 	})
 	if err != nil {
-		return "", fmt.Errorf("failed to upload image to Cloudinary: %v", err)
+		return "", fmt.Errorf("failed to upload image to Cloudinary: %w", err)
 	}
 
 	// Trả về URL của ảnh đã upload
