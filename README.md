@@ -1,3 +1,2 @@
-Start project
-
-make dev
+How to start:
+(in Go-Main) make dev
