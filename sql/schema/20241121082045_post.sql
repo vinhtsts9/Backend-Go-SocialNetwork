@@ -8,7 +8,7 @@ CREATE TABLE post (
     user_nickname varchar(255) not null references user_info(user_nickname),
     created_at TIMESTAMP DEFAULT NOW(),       -- Thời gian tạo bài viết
     updated_at TIMESTAMP DEFAULT NOW() ON UPDATE NOW(), -- Thời gian cập nhật bài viết
-    is_published BOOLEAN DEFAULT FALSE,       -- Trạng thái bài viết (đã đăng hay chưa)
+    privacy ENUM('private', 'friends', 'public') NOT NULL DEFAULT 'public',       -- Trạng thái bài viết (đã đăng hay chưa)
     metadata JSON DEFAULT NULL,               -- Metadata bổ sung cho bài viết (tags, views, v.v.)
     CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES user_info(user_id) -- Ràng buộc liên kết với bảng user_info
 );

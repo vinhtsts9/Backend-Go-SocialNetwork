@@ -12,8 +12,8 @@ import (
 )
 
 const createPost = `-- name: CreatePost :execresult
-INSERT INTO post (title, image_paths, user_id, created_at, updated_at, user_nickname)
-VALUES (?, ?, ?, NOW(), NOW(), ?)
+INSERT INTO post (title, image_paths, user_id, created_at, updated_at, user_nickname, privacy)
+VALUES (?, ?, ?, NOW(), NOW(), ?, ?)
 `
 
 type CreatePostParams struct {
@@ -21,6 +21,7 @@ type CreatePostParams struct {
 	ImagePaths   json.RawMessage
 	UserID       uint64
 	UserNickname string
+	Privacy      PostPrivacy
 }
 
 // Create a new post
@@ -30,6 +31,7 @@ func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (sql.Res
 		arg.ImagePaths,
 		arg.UserID,
 		arg.UserNickname,
+		arg.Privacy,
 	)
 }
 
@@ -45,7 +47,7 @@ func (q *Queries) DeletePost(ctx context.Context, id uint64) error {
 }
 
 const getAllpost = `-- name: GetAllpost :many
-SELECT id, user_id, title, image_paths, user_nickname, p.created_at, updated_at, is_published, metadata, follow_id, follower_id, following_id, uf.created_at
+SELECT p.id, p.user_id, p.title, p.image_paths, p.user_nickname, p.created_at, p.updated_at, p.privacy, p.metadata
 FROM post p
 left join user_follows uf 
 on p.user_id = uf.following_id
@@ -53,32 +55,16 @@ WHERE uf.follower_id =?
 order by p.created_at desc
 `
 
-type GetAllpostRow struct {
-	ID           uint64
-	UserID       uint64
-	Title        string
-	ImagePaths   json.RawMessage
-	UserNickname string
-	CreatedAt    sql.NullTime
-	UpdatedAt    sql.NullTime
-	IsPublished  sql.NullBool
-	Metadata     json.RawMessage
-	FollowID     sql.NullInt64
-	FollowerID   sql.NullInt64
-	FollowingID  sql.NullInt64
-	CreatedAt_2  sql.NullTime
-}
-
 // Get all post
-func (q *Queries) GetAllpost(ctx context.Context, followerID sql.NullInt64) ([]GetAllpostRow, error) {
+func (q *Queries) GetAllpost(ctx context.Context, followerID sql.NullInt64) ([]Post, error) {
 	rows, err := q.db.QueryContext(ctx, getAllpost, followerID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetAllpostRow
+	var items []Post
 	for rows.Next() {
-		var i GetAllpostRow
+		var i Post
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
@@ -87,12 +73,8 @@ func (q *Queries) GetAllpost(ctx context.Context, followerID sql.NullInt64) ([]G
 			&i.UserNickname,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.IsPublished,
+			&i.Privacy,
 			&i.Metadata,
-			&i.FollowID,
-			&i.FollowerID,
-			&i.FollowingID,
-			&i.CreatedAt_2,
 		); err != nil {
 			return nil, err
 		}
@@ -141,6 +123,66 @@ func (q *Queries) GetPostById(ctx context.Context, id uint64) (GetPostByIdRow, e
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getTimelineByUserId = `-- name: GetTimelineByUserId :many
+SELECT 
+  p.id, 
+  p.user_id, 
+  p.title, 
+  p.image_paths, 
+  p.user_nickname, 
+  p.created_at, 
+  p.updated_at, 
+  p.privacy, 
+  COALESCE(p.metadata, JSON_OBJECT()) AS metadata
+FROM post p
+left JOIN user_follows uf
+  ON uf.follower_id = ?
+ AND uf.following_id = p.user_id
+WHERE 
+  p.user_id = ?
+  OR p.privacy = 'public' 
+  OR (p.privacy = 'friends' AND uf.is_friend = TRUE)
+ORDER BY p.created_at DESC
+`
+
+type GetTimelineByUserIdParams struct {
+	FollowerID sql.NullInt64
+	UserID     uint64
+}
+
+func (q *Queries) GetTimelineByUserId(ctx context.Context, arg GetTimelineByUserIdParams) ([]Post, error) {
+	rows, err := q.db.QueryContext(ctx, getTimelineByUserId, arg.FollowerID, arg.UserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Post
+	for rows.Next() {
+		var i Post
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Title,
+			&i.ImagePaths,
+			&i.UserNickname,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Privacy,
+			&i.Metadata,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getpostByUserId = `-- name: GetpostByUserId :many

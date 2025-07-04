@@ -35,7 +35,11 @@ func (s *sTimeline) GetAllPosts(ctx *gin.Context, userId int64) (int, []model.Po
 
 	// 2. Nếu không có cache, truy vấn DB
 	log.Println("Cache miss, querying database for userId:", userId)
-	rows, err := s.r.GetAllpost(ctx, sql.NullInt64{Int64: userId, Valid: userId > 0})
+	arg := database.GetTimelineByUserIdParams{
+		FollowerID: sql.NullInt64{Int64: userId, Valid: userId > 0}, // Chỉ sử dụng FollowerID nếu userId > 0
+		UserID:     uint64(userId),
+	}
+	rows, err := s.r.GetTimelineByUserId(ctx, arg)
 	if err != nil {
 		return response.ErrCodePostFailed, nil, fmt.Errorf("failed to get posts from DB: %w", err)
 	}

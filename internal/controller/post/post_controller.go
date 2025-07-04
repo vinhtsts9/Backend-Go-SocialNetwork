@@ -9,7 +9,6 @@ import (
 	"go-ecommerce-backend-api/m/v2/response"
 	"go-ecommerce-backend-api/m/v2/worker"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -45,20 +44,12 @@ func (c *cPost) CreatePost(ctx *gin.Context) {
 	}
 	fmt.Println("DEBUG: Multipart Form Parsed Successfully")
 
-	userNicknameStr := ctx.PostForm("user_nickname")
+	userNicknameStr := auth.GetUserInfoFromContext(ctx).UserNickname
 	title := ctx.DefaultPostForm("title", "")
-	isPublishedStr := ctx.PostForm("is_published")
+	isPublishedStr := ctx.PostForm("privacy_mode")
 	metadata := ctx.DefaultPostForm("metadata", "")
 
 	userInfo := auth.GetUserInfoFromContext(ctx)
-
-	// Chuyển đổi is_published sang bool
-	isPublished, err := strconv.ParseBool(isPublishedStr)
-	if err != nil {
-		fmt.Println("DEBUG: error convert isPublished", err)
-		ctx.JSON(400, gin.H{"error": fmt.Sprintf("error convert isPublished: %s", err.Error())})
-		return
-	}
 
 	// Nhận các file ảnh
 	files := ctx.Request.MultipartForm.File["image_paths"]
@@ -98,7 +89,7 @@ func (c *cPost) CreatePost(ctx *gin.Context) {
 		UserNickname: userNicknameStr,
 		Title:        title,
 		ImagePaths:   imageUrls,
-		IsPublished:  isPublished,
+		Privacy:      isPublishedStr,
 		Metadata:     metadata,
 		UserId:       uint64(userInfo.UserID),
 	}

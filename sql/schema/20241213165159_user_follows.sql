@@ -5,6 +5,7 @@ create table user_follows (
     follower_id bigint unsigned ,
     following_id bigint unsigned,
     created_at timestamp default current_timestamp,
+    is_friend BOOLEAN NOT NULL DEFAULT FALSE,
     foreign key (follower_id) references user_info(user_id),
     foreign key (following_id) references user_info(user_id)
 );

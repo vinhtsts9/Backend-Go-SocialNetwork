@@ -50,7 +50,7 @@ func MapGetPostByIdRowToPost(row database.GetPostByIdRow) (model.Post, error) {
 	}, nil
 }
 
-func MapGetAllpostRowToPost(row database.GetAllpostRow) (model.Post, error) {
+func MapGetAllpostRowToPost(row database.Post) (model.Post, error) {
 	// Giải mã ImagePaths trực tiếp
 	var imagePaths []string
 	if err := json.Unmarshal(row.ImagePaths, &imagePaths); err != nil {

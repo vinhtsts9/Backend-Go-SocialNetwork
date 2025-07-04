@@ -42,7 +42,6 @@ func CasbinMiddleware() gin.HandlerFunc {
 				return
 			}
 			global.Logger.Sugar().Info("Permissions found: ", permissions)
-
 			// Thêm quyền mới vào Casbin enforcer
 			for _, perm := range permissions {
 				global.Casbin.AddPolicy(sub, perm.Resource, perm.Action)

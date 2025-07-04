@@ -32,8 +32,9 @@ func (d *RedisTaskDistributor) DistributeTaskPost(
 	createPostParams := database.CreatePostParams{
 		Title:        payload.Title,
 		ImagePaths:   contentJSON,
-		UserNickname: payload.UserNickname,
+		UserNickname: payload.UserNickname.String,
 		UserID:       payload.UserId,
+		Privacy:      database.PostPrivacy(payload.Privacy),
 	}
 
 	// Lưu vào database

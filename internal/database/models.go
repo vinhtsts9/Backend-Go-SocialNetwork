@@ -147,6 +147,49 @@ func (ns NullMessagesStatusStatus) Value() (driver.Value, error) {
 	return string(ns.MessagesStatusStatus), nil
 }
 
+type PostPrivacy string
+
+const (
+	PostPrivacyPrivate PostPrivacy = "private"
+	PostPrivacyFriends PostPrivacy = "friends"
+	PostPrivacyPublic  PostPrivacy = "public"
+)
+
+func (e *PostPrivacy) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = PostPrivacy(s)
+	case string:
+		*e = PostPrivacy(s)
+	default:
+		return fmt.Errorf("unsupported scan type for PostPrivacy: %T", src)
+	}
+	return nil
+}
+
+type NullPostPrivacy struct {
+	PostPrivacy PostPrivacy
+	Valid       bool // Valid is true if PostPrivacy is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullPostPrivacy) Scan(value interface{}) error {
+	if value == nil {
+		ns.PostPrivacy, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.PostPrivacy.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullPostPrivacy) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.PostPrivacy), nil
+}
+
 type UserTwoFactorTwoFactorAuthType string
 
 const (
@@ -269,7 +312,7 @@ type Post struct {
 	UserNickname string
 	CreatedAt    sql.NullTime
 	UpdatedAt    sql.NullTime
-	IsPublished  sql.NullBool
+	Privacy      PostPrivacy
 	Metadata     json.RawMessage
 }
 
@@ -314,6 +357,7 @@ type UserFollow struct {
 	FollowerID  sql.NullInt64
 	FollowingID sql.NullInt64
 	CreatedAt   sql.NullTime
+	IsFriend    bool
 }
 
 // user_info

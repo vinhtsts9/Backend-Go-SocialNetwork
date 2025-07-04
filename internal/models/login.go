@@ -109,10 +109,10 @@ type TwoFactorVerificationInput struct {
 // Model dùng để tạo mới Post
 type CreatePostInput struct {
 	UserId       uint64      `json:"user_id"`
-	UserNickname string      `json:"user_nickname"`
+	UserNickname NullString  `json:"user_nickname"`
 	Title        string      `json:"title"`
 	ImagePaths   interface{} `json:"image_paths"` // JSON content in string format
-	IsPublished  bool        `json:"is_published"`
+	Privacy      string      `json:"privacy_mode"`
 	Metadata     string      `json:"metadata"` // JSON metadata in string format
 }
 

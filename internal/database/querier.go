@@ -51,7 +51,7 @@ type Querier interface {
 	EnableTwoFactorTypeEmail(ctx context.Context, arg EnableTwoFactorTypeEmailParams) error
 	FindUsers(ctx context.Context, arg FindUsersParams) ([]UserInfo, error)
 	// Get all post
-	GetAllpost(ctx context.Context, followerID sql.NullInt64) ([]GetAllpostRow, error)
+	GetAllpost(ctx context.Context, followerID sql.NullInt64) ([]Post, error)
 	GetChatHistory(ctx context.Context, roomID sql.NullInt64) ([]GetChatHistoryRow, error)
 	GetCommentByID(ctx context.Context, id int32) (Comment, error)
 	GetCommentByLastInsertId(ctx context.Context, id int32) (Comment, error)
@@ -73,6 +73,7 @@ type Querier interface {
 	GetRolesByUserID(ctx context.Context, userID sql.NullInt64) ([]Role, error)
 	GetRoomByUserId(ctx context.Context, userID uint64) ([]ChatRoom, error)
 	GetRootComment(ctx context.Context, postID uint64) ([]Comment, error)
+	GetTimelineByUserId(ctx context.Context, arg GetTimelineByUserIdParams) ([]Post, error)
 	// GetTwoFactorMethodByID
 	GetTwoFactorMethodByID(ctx context.Context, twoFactorID uint32) (UserTwoFactor, error)
 	// GetTwoFactorMethodByIDAndType: select lay email de sen otp
